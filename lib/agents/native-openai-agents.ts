@@ -17,22 +17,58 @@ export class NativeQuestionAgent {
         messages: [
           {
             role: "system",
-            content: "You are a sustainability consultant interviewing people about their personal sustainability journey and lifestyle choices. Always respond with valid JSON only."
+            content: `You are a sustainability consultant conducting a comprehensive assessment covering ALL aspects of personal sustainability. 
+
+TOPICS TO COVER (rotate through these, don't repeat):
+1. Food Sources & Diet: Do you know where your vegetables come from? Do you eat seasonal vegetables? Is your food residue free?
+2. Water: Do you know where your water comes from? Do you carry your water bottle to the airport?
+3. Transportation & Travel: Where did you last go for holiday? How would you classify your last holiday?
+4. Consumption: Are you willing to pay more for knowing the source of your food? Which brands represent your personality best?
+5. Energy & Home: renewable energy, efficiency, smart home tech
+6. Waste & Recycling: zero waste efforts, composting, circular economy
+7. Fashion & Shopping: fast fashion, sustainable brands, minimalism
+8. Finance: ESG investing, sustainable banking, carbon offsets
+9. Community: activism, education, local initiatives
+10. Digital: e-waste, cloud usage, digital minimalism
+
+ALWAYS:
+- Respond with valid JSON only
+- Make questions progressively deeper
+- Include "Other (please specify)" as the last option with encouragement`
           },
           {
             role: "user", 
-            content: `Create a warm, personal opening question about sustainability for individuals. Focus on their personal approach to sustainability in daily life.
+            content: `Create a simple, factual opening question about sustainability basics. Focus on concrete, everyday practices rather than abstract concepts.
+
+Examples of good questions:
+- "Do you know where your vegetables come from?"
+- "Do you carry your water bottle when traveling?"
+- "Are you willing to pay more for knowing the source of your food?"
 
 Return only this JSON format:
 {
-  "text": "How do you personally approach sustainability in your daily life?",
+  "text": "Your simple, factual sustainability question",
   "type": "mcq",
-  "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-  "context": "One sentence about personal sustainability journey.",
-  "id": "native-q-1"
+  "options": [
+    "First specific, concrete option",
+    "Second meaningful choice",
+    "Third practical option",
+    "Fourth realistic choice",
+    "Other (please specify)"
+  ],
+  "context": "Brief context about the importance of this practice.",
+  "id": "native-q-1",
+  "multiSelect": false,
+  "encourageOther": "Share your specific approach"
 }
 
-Make it PERSONAL, relatable, and about individual sustainability choices - not corporate or executive language.`
+CRITICAL REQUIREMENTS:
+- ALWAYS provide exactly 5 options
+- The 5th option MUST ALWAYS be "Other (please specify)" - never add a second "Other" option
+- Use "mcq" for single selection only
+- Ask simple, factual questions about concrete behaviors
+- Make options specific and realistic
+- Focus on everyday sustainability practices`
           }
         ],
         max_completion_tokens: 1000,
@@ -68,9 +104,12 @@ Make it PERSONAL, relatable, and about individual sustainability choices - not c
           "Concern for future generations",
           "Personal health and wellbeing", 
           "Environmental documentaries or news",
-          "Cost savings and efficiency"
+          "Cost savings and efficiency",
+          "Other (please specify)"
         ],
-        context: "Understanding your sustainability journey starting point."
+        context: "Understanding your sustainability journey starting point.",
+        multiSelect: false,
+        encourageOther: "Share what sparked your sustainability interest"
       }
     }
   }
@@ -85,33 +124,141 @@ Make it PERSONAL, relatable, and about individual sustainability choices - not c
         `Q${i+1}: ${ans.value}`
       ).join('\n')
 
+      // Extract previous question texts to avoid repetition
+      const previousQuestionTexts = previousAnswers.map((ans, i) => {
+        // This is a simplified approach - in a real implementation you'd store question texts
+        return `Question ${i+1}` // placeholder
+      })
+
+      // Track topics to enforce diversity
+      const getQuestionTopic = (questionText: string) => {
+        const text = questionText.toLowerCase()
+        if (text.includes('vegetable') || text.includes('food') || text.includes('eat') || text.includes('seasonal')) return 'Food & Diet'
+        if (text.includes('water') || text.includes('bottle')) return 'Water'
+        if (text.includes('holiday') || text.includes('travel') || text.includes('transport')) return 'Travel'
+        if (text.includes('pay') || text.includes('brand') || text.includes('buy') || text.includes('purchase')) return 'Consumption'
+        if (text.includes('energy') || text.includes('home') || text.includes('appliance')) return 'Energy & Home'
+        if (text.includes('waste') || text.includes('recycle') || text.includes('compost')) return 'Waste'
+        return 'General'
+      }
+
+      // Analyze last 2 questions for topic repetition
+      const lastTwoTopics = previousAnswers.slice(-2).map((_, i) => {
+        // This is a simplified approach - in a real implementation you'd want to store question topics
+        return 'Previous Topic' 
+      })
+      
+      const topicCounts = previousAnswers.reduce((acc, ans, i) => {
+        // Simplified topic counting - you'd want to enhance this
+        const topic = getQuestionTopic(ans.value)
+        acc[topic] = (acc[topic] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+
       const response = await client.chat.completions.create({
         messages: [
           {
             role: "system",
-            content: "You are a sustainability consultant interviewing individuals about their personal environmental and social commitment. Always respond with valid JSON only."
+            content: `You are a sustainability consultant asking simple, factual questions. Focus on concrete behaviors and practices, not abstract concepts.
+
+QUESTION APPROACH:
+- Ask about specific, observable behaviors
+- Focus on everyday sustainability practices
+- Build on previous answers to create logical flow
+- Keep questions simple and relatable
+
+SAMPLE QUESTION TYPES:
+- Food: "Do you know where your vegetables come from?" "Do you eat seasonal vegetables?"
+- Water: "Do you know where your water comes from?" "Do you carry your water bottle to the airport?"
+- Travel: "Where did you last go for holiday?" "How would you classify your last holiday?"
+- Consumption: "Are you willing to pay more for knowing the source of your food?"
+
+ALWAYS:
+- Respond with valid JSON only
+- Ask simple, factual questions
+- Build logical question flow based on previous answers
+- Avoid repeating topics already covered`
           },
           {
             role: "user",
-            content: `Create sustainability question ${questionNumber} for a personal interview. 
+            content: `Create sustainability question ${questionNumber} that builds logically on the previous answers.
 
-Previous personal answers:
+Previous answers:
 ${context}
 
-Current commitment score: ${currentScore}
+Score: ${currentScore}
+Question number: ${questionNumber}/10
 
-Return only this JSON format:
+TOPIC ANALYSIS:
+- Ensure no more than 2 questions on same topic
+- Topics covered in previous questions: ${Object.keys(topicCounts).length > 0 ? Object.entries(topicCounts).map(([topic, count]) => `${topic} (${count})`).join(', ') : 'None yet'}
+- Available fresh topics: Food & Diet, Water, Travel, Consumption, Energy & Home, Waste
+
+QUESTION DEDUPLICATION:
+- This is question ${questionNumber} of 10
+- You have already asked ${previousAnswers.length} questions
+- NEVER ask the exact same question twice
+- Each question must be completely unique and different from all previous questions
+
+TOPIC DIVERSITY RULES:
+- NEVER ask more than 2 questions on the same topic
+- Count previous questions to ensure topic rotation
+- Force topic switches after 2 questions on same area
+
+ANALYZE THE PREVIOUS ANSWERS:
+- What topics have been covered already?
+- How many questions on each topic?
+- What NEW topic should be explored?
+- Ensure balanced coverage across different areas
+
+TOPIC ROTATION (never more than 2 questions each):
+- Food & Diet (vegetables, seasonal eating, food sources)
+- Water (sources, bottles, conservation)
+- Travel (holidays, transportation, style)
+- Consumption (willingness to pay, brand choices)
+- Energy & Home (appliances, renewable energy)
+- Waste (recycling, composting, reduction)
+
+MANDATORY TOPIC SWITCHING:
+If last 2 questions were on same topic, MUST switch to different topic
+
+ASK SIMPLE, FACTUAL QUESTIONS like:
+- "Do you know where your vegetables come from?"
+- "Do you eat seasonal vegetables?"
+- "Do you carry your water bottle to the airport?"
+- "Are you willing to pay more for knowing the source of your food?"
+- "Where did you last go for holiday?" (can be open-ended but provide MCQ options)
+- "How would you classify your last holiday?"
+
+Return JSON:
 {
-  "text": "Your personal sustainability question here?",
+  "text": "Your simple, factual sustainability question",
   "type": "mcq",
-  "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-  "context": "One sentence about personal sustainability assessment.",
-  "id": "native-q-${questionNumber}"
+  "options": [
+    "First specific, concrete option",
+    "Second realistic choice",
+    "Third practical option",
+    "Fourth meaningful choice",
+    "Other (please specify)"
+  ],
+  "context": "Brief context about why this matters.",
+  "id": "native-q-${questionNumber}",
+  "multiSelect": false,
+  "encourageOther": "Share your specific approach"
 }
 
-Types available: "mcq", "text", "mcq_text"
-Focus on PERSONAL SUSTAINABILITY: daily habits, lifestyle choices, consumption patterns, travel decisions, home choices, personal values, individual climate actions.
-Make it relatable and personal - NOT corporate or organizational language. Build on previous personal answers.`
+CRITICAL RULES:
+- ALWAYS provide exactly 5 options
+- The 5th option MUST ALWAYS be "Other (please specify)" - NEVER duplicate this
+- Use "mcq" type only
+- Ask simple, observable behavior questions
+- NEVER REPEAT THE EXACT SAME QUESTION - each question must be unique
+- ENFORCE TOPIC DIVERSITY: Never more than 2 questions on same topic
+- If any topic has 2+ questions, MUST choose different topic
+- Rotate through topics: Food → Water → Travel → Consumption → Energy → Waste
+- Keep questions factual and concrete, not abstract
+- Balance depth with breadth across sustainability areas
+- AVOID lifestyle questions that aren't about sustainability (no morning routines, etc.)`
           }
         ],
         max_completion_tokens: 1200,
@@ -137,28 +284,116 @@ Make it relatable and personal - NOT corporate or organizational language. Build
     } catch (error) {
       console.error('Native OpenAI next question error:', error)
       
-      // Personal sustainability fallback questions
+      // Simple and factual sustainability fallback questions
       const fallbacks = [
         {
-          text: "What sustainability changes have you made at home?",
-          type: "mcq_text",
-          options: ["Energy-efficient appliances", "Reduced plastic use", "Sustainable food choices", "Water conservation"],
-          context: "Home changes show personal commitment to sustainability."
-        },
-        {
-          text: "How do you think about sustainability when making purchases?",
-          type: "text",
-          context: "Purchasing decisions reveal personal sustainability values."
-        },
-        {
-          text: "What's your biggest sustainability challenge personally?",
+          text: "Do you know where your vegetables come from?",
           type: "mcq",
-          options: ["Travel and transportation", "Food and consumption", "Waste and recycling", "Energy use at home"],
-          context: "Personal challenges show areas for growth and commitment."
+          options: [
+            "Yes, I buy local/regional produce",
+            "Sometimes, I check labels when shopping",
+            "No, but I'm interested to learn",
+            "I don't think about it much",
+            "Other (please specify)"
+          ],
+          context: "Understanding food sources shows sustainability awareness.",
+          multiSelect: false,
+          encourageOther: "Tell us about your food sourcing preferences"
+        },
+        {
+          text: "Do you eat seasonal vegetables?",
+          type: "mcq",
+          options: [
+            "Yes, I plan meals around seasonal produce",
+            "Sometimes, when they're available",
+            "I try to but it's challenging",
+            "I don't consider seasons when buying",
+            "Other (please specify)"
+          ],
+          context: "Seasonal eating reduces environmental impact.",
+          multiSelect: false,
+          encourageOther: "Share your approach to seasonal eating"
+        },
+        {
+          text: "Do you carry your water bottle to the airport?",
+          type: "mcq",
+          options: [
+            "Always, I refill after security",
+            "Usually, but sometimes forget",
+            "Rarely, I buy water at the airport",
+            "Never, it's too much hassle",
+            "Other (please specify)"
+          ],
+          context: "Small habits like this show environmental mindfulness.",
+          multiSelect: false,
+          encourageOther: "Tell us about your travel water habits"
+        },
+        {
+          text: "Are you willing to pay more for knowing the source of your food?",
+          type: "mcq",
+          options: [
+            "Yes, transparency is worth the premium",
+            "Sometimes, for certain products",
+            "I want to but budget is tight",
+            "No, price is my main concern",
+            "Other (please specify)"
+          ],
+          context: "Willingness to pay shows commitment to sustainable practices.",
+          multiSelect: false,
+          encourageOther: "Share your thoughts on paying for transparency"
+        },
+        {
+          text: "Where did you last go for your holiday?",
+          type: "mcq",
+          options: [
+            "Nearby region (within 500km)",
+            "Domestic destination",
+            "International but nearby country",
+            "Long-haul international destination",
+            "Other (please specify)"
+          ],
+          context: "Travel patterns show environmental impact awareness.",
+          multiSelect: false,
+          encourageOther: "Tell us about your recent travel"
+        },
+        {
+          text: "How would you classify your last holiday?",
+          type: "mcq",
+          options: [
+            "Immersive local experience",
+            "Barefoot luxury with local community support",
+            "Standard resort/hotel stay",
+            "Adventure/outdoor focused",
+            "Other (please specify)"
+          ],
+          context: "Holiday style shows values around community and environment.",
+          multiSelect: false,
+          encourageOther: "Describe your travel style"
         }
       ]
       
-      const fallback = fallbacks[questionNumber % fallbacks.length]
+      // Select fallback ensuring topic diversity
+      const usedTopics = previousAnswers.slice(-2).map(ans => getQuestionTopic(ans.value))
+      let fallbackIndex = questionNumber % fallbacks.length
+      
+      // If we have answers and need to avoid topic repetition
+      if (previousAnswers.length >= 2) {
+        const lastTopic = getQuestionTopic(previousAnswers[previousAnswers.length - 1].value)
+        const secondLastTopic = previousAnswers.length >= 2 ? getQuestionTopic(previousAnswers[previousAnswers.length - 2].value) : null
+        
+        // If last two questions were on same topic, force different topic
+        if (lastTopic === secondLastTopic) {
+          const availableFallbacks = fallbacks.filter((_, index) => {
+            const fallbackTopic = index < 2 ? 'Food & Diet' : 
+                                 index < 3 ? 'Water' : 
+                                 index < 5 ? 'Travel' : 'Consumption'
+            return fallbackTopic !== lastTopic
+          })
+          fallbackIndex = fallbacks.indexOf(availableFallbacks[0] || fallbacks[0])
+        }
+      }
+      
+      const fallback = fallbacks[fallbackIndex]
       return {
         id: `native-fallback-${questionNumber}`,
         ...fallback

@@ -1,9 +1,12 @@
 export interface Question {
   id: string
   text: string
-  type: 'mcq' | 'text'
+  type: 'mcq' | 'text' | 'mcq_multi' | 'mcq_text'
   options?: string[]
   context?: string
+  multiSelect?: boolean
+  encourageOther?: string
+  topic?: string
 }
 
 export interface Answer {

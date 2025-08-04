@@ -51,7 +51,7 @@ export default function ReportCard({ report, onRestart }: ReportCardProps) {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mb-8">
-              {report.categories.map((category, index) => (
+              {report.categories?.map((category, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: -20 }}

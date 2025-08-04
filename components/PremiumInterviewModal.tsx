@@ -22,19 +22,27 @@ export default function PremiumInterviewModal({ onComplete }: PremiumInterviewMo
   const [currentScore, setCurrentScore] = useState(0)
   const [tracker] = useState(() => new BehavioralTracker())
   const [scoringEngine] = useState(() => new CommitmentScoringEngine())
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [isProcessingAnswer, setIsProcessingAnswer] = useState(false)
 
   const totalQuestions = 10
 
   useEffect(() => {
-    fetchInitialQuestion()
+    // Prevent double initialization in React StrictMode
+    if (!isInitialized) {
+      setIsInitialized(true)
+      fetchInitialQuestion()
+    }
   }, [])
 
   const fetchInitialQuestion = async () => {
+    console.log('Fetching initial question...')
     try {
       const response = await fetch('/api/start-interview', {
         method: 'POST'
       })
       const firstQuestion = await response.json()
+      console.log('Received initial question:', firstQuestion)
       setQuestions([firstQuestion])
       setIsLoading(false)
       // Start behavioral tracking for first question
@@ -46,10 +54,20 @@ export default function PremiumInterviewModal({ onComplete }: PremiumInterviewMo
   }
 
   const handleAnswer = async (answer: string) => {
-    // Finish behavioral tracking for current question
-    const currentBehavioralData = tracker.finishQuestion(answer)
-    const updatedBehavioralData = [...behavioralData, currentBehavioralData]
-    setBehavioralData(updatedBehavioralData)
+    // Prevent double-processing
+    if (isProcessingAnswer) {
+      console.log('Answer already being processed, ignoring duplicate')
+      return
+    }
+    
+    setIsProcessingAnswer(true)
+    console.log('Handling answer:', answer, 'for question index:', currentQuestionIndex)
+    
+    try {
+      // Finish behavioral tracking for current question
+      const currentBehavioralData = tracker.finishQuestion(answer)
+      const updatedBehavioralData = [...behavioralData, currentBehavioralData]
+      setBehavioralData(updatedBehavioralData)
 
     const newAnswer: Answer = {
       questionId: questions[currentQuestionIndex].id,
@@ -64,31 +82,64 @@ export default function PremiumInterviewModal({ onComplete }: PremiumInterviewMo
     const liveScore = scoringEngine.calculateLiveScore(updatedAnswers, updatedBehavioralData)
     setCurrentScore(liveScore)
 
-    if (currentQuestionIndex < totalQuestions - 1) {
-      setIsLoading(true)
-      try {
-        const response = await fetch('/api/generate-question', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            answers: updatedAnswers, 
-            behavioralData: updatedBehavioralData,
-            currentScore: liveScore
-          })
-        })
-        const nextQuestion = await response.json()
-        setQuestions([...questions, nextQuestion])
-        setCurrentQuestionIndex(currentQuestionIndex + 1)
+      if (currentQuestionIndex < totalQuestions - 1) {
+        setIsLoading(true)
+        let retries = 0
+        const maxRetries = 2
         
-        // Start tracking for next question
-        tracker.startQuestion()
-      } catch (error) {
-        console.error('Error generating question:', error)
-      } finally {
+        while (retries <= maxRetries) {
+          try {
+            const response = await fetch('/api/generate-question', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                answers: updatedAnswers, 
+                behavioralData: updatedBehavioralData,
+                currentScore: liveScore
+              })
+            })
+            
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+            }
+            
+            const nextQuestion = await response.json()
+            
+            // Validate question structure
+            if (!nextQuestion.text || !nextQuestion.options) {
+              throw new Error('Invalid question format received')
+            }
+            
+            setQuestions([...questions, nextQuestion])
+            setCurrentQuestionIndex(currentQuestionIndex + 1)
+            
+            // Start tracking for next question
+            tracker.startQuestion()
+            break // Success, exit retry loop
+            
+          } catch (error) {
+            console.error(`Error generating question (attempt ${retries + 1}):`, error)
+            retries++
+            
+            if (retries > maxRetries) {
+              // Final fallback - skip to completion
+              console.error('Max retries reached, completing assessment')
+              onComplete(updatedAnswers, updatedBehavioralData)
+              break
+            }
+            
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000 * retries))
+          }
+        }
         setIsLoading(false)
+      } else {
+        onComplete(updatedAnswers, updatedBehavioralData)
       }
-    } else {
-      onComplete(updatedAnswers, updatedBehavioralData)
+    } catch (error) {
+      console.error('Error in handleAnswer:', error)
+    } finally {
+      setIsProcessingAnswer(false)
     }
   }
 
@@ -113,9 +164,9 @@ export default function PremiumInterviewModal({ onComplete }: PremiumInterviewMo
 
   return (
     <div className="fixed inset-0 bg-accent-pearl">
-      <div className="h-full flex flex-col max-h-screen">
+      <div className="h-full flex flex-col max-h-screen min-h-screen">
         {/* Progress Section */}
-        <div className="px-3 pt-3 pb-1 flex-shrink-0">
+        <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-2 flex-shrink-0 safe-area-top">
           <PremiumProgressBar 
             current={currentQuestionIndex + 1} 
             total={totalQuestions}
@@ -126,7 +177,7 @@ export default function PremiumInterviewModal({ onComplete }: PremiumInterviewMo
         {/* Main Content */}
         <div className="flex-1 flex min-h-0 overflow-hidden">
           {/* Question Section */}
-          <div className="flex-1 flex items-center justify-center px-3 py-1 overflow-y-auto">
+          <div className="flex-1 flex items-center justify-center px-3 sm:px-4 py-2 sm:py-4 overflow-y-auto safe-area-bottom">
             <AnimatePresence mode="wait">
               {questions[currentQuestionIndex] && (
                 <PremiumQuestionCard
@@ -134,7 +185,7 @@ export default function PremiumInterviewModal({ onComplete }: PremiumInterviewMo
                   question={questions[currentQuestionIndex]}
                   questionNumber={currentQuestionIndex + 1}
                   onAnswer={handleAnswer}
-                  isLoading={isLoading}
+                  isLoading={isLoading || isProcessingAnswer}
                 />
               )}
             </AnimatePresence>

@@ -45,6 +45,18 @@ export class CommitmentScoringEngine {
     const level = this.classifyLevel(finalScore)
     const confidence = this.calculateConfidence(behavioralData)
     
+    console.log('Final scoring breakdown:', {
+      actionVelocity: Math.round(actionVelocity * 100),
+      resourceAllocation: Math.round(resourceAllocation * 100),
+      influenceRadius: Math.round(influenceRadius * 100),
+      commitmentIntensity: Math.round(commitmentIntensity * 100),
+      behavioralConsistency: Math.round(behavioralConsistency * 100),
+      baseScore: Math.round(baseScore * 100),
+      finalScore: Math.round(finalScore),
+      level,
+      confidence: Math.round(confidence * 100)
+    })
+    
     return {
       actionVelocity,
       resourceAllocation,
@@ -60,13 +72,37 @@ export class CommitmentScoringEngine {
   private calculateActionVelocity(answers: Answer[], behavioralData: BehavioralData[]): number {
     let score = 0
     
-    // Average response time (faster = higher velocity)
-    const avgResponseTime = behavioralData.reduce((sum, data) => sum + data.responseTime, 0) / behavioralData.length
-    const responseTimeScore = Math.max(0, 1 - (avgResponseTime / 30)) // 30 seconds max
+    // Default to moderate response time if no behavioral data
+    let responseTimeScore = 0.5
+    if (behavioralData.length > 0) {
+      const avgResponseTime = behavioralData.reduce((sum, data) => sum + data.responseTime, 0) / behavioralData.length
+      responseTimeScore = Math.max(0, 1 - (avgResponseTime / 30)) // 30 seconds max
+    }
+    
+    // Look for positive sustainability actions in answers
+    const sustainabilityActions = [
+      'yes', 'always', 'local', 'organic', 'seasonal', 'renewable', 'efficient',
+      'sustainable', 'eco-friendly', 'compost', 'recycle', 'reuse', 'reduce'
+    ]
+    
+    let sustainabilityScore = 0
+    answers.forEach(answer => {
+      const text = answer.value.toLowerCase()
+      sustainabilityActions.forEach(word => {
+        if (text.includes(word)) sustainabilityScore += 0.1
+      })
+      
+      // Bonus for first options (usually more positive)
+      if (text.includes('yes, i') || text.includes('always')) {
+        sustainabilityScore += 0.2
+      }
+    })
+    
+    sustainabilityScore = Math.min(1, sustainabilityScore)
     
     // Decisive language patterns
-    const decisiveWords = ['will', 'immediately', 'already', 'started', 'committed', 'decided']
-    const hesitantWords = ['might', 'probably', 'maybe', 'possibly', 'thinking about', 'considering']
+    const decisiveWords = ['will', 'immediately', 'already', 'started', 'committed', 'decided', 'always']
+    const hesitantWords = ['might', 'probably', 'maybe', 'possibly', 'thinking about', 'considering', 'never']
     
     let decisiveCount = 0
     let hesitantCount = 0
@@ -81,154 +117,136 @@ export class CommitmentScoringEngine {
       })
     })
     
-    const languageScore = Math.max(0, (decisiveCount - hesitantCount) / answers.length)
+    const languageScore = Math.max(0, Math.min(1, (decisiveCount - hesitantCount) / Math.max(1, answers.length) + 0.5))
     
-    // Past action evidence
-    const actionWords = ['did', 'implemented', 'changed', 'achieved', 'completed', 'transformed']
-    let actionCount = 0
+    // Default specificity if no behavioral data
+    let avgSpecificity = 0.5
+    if (behavioralData.length > 0) {
+      avgSpecificity = behavioralData.reduce((sum, data) => sum + data.specificityIndex, 0) / behavioralData.length
+    }
     
-    answers.forEach(answer => {
-      const text = answer.value.toLowerCase()
-      actionWords.forEach(word => {
-        if (text.includes(word)) actionCount++
-      })
-    })
-    
-    const pastActionScore = Math.min(1, actionCount / answers.length)
-    
-    // Specificity (detailed answers show execution thinking)
-    const avgSpecificity = behavioralData.reduce((sum, data) => sum + data.specificityIndex, 0) / behavioralData.length
-    
-    score = (responseTimeScore + languageScore + pastActionScore + avgSpecificity) / 4
+    score = (responseTimeScore * 0.2 + sustainabilityScore * 0.4 + languageScore * 0.3 + avgSpecificity * 0.1)
+    console.log('Action velocity components:', { responseTimeScore, sustainabilityScore, languageScore, avgSpecificity, score })
     return Math.max(0, Math.min(1, score))
   }
   
   private calculateResourceAllocation(answers: Answer[]): number {
     let score = 0
     
-    // Look for evidence of time, money, attention investment
-    const investmentIndicators = [
-      'time', 'invest', 'dedicate', 'prioritize', 'focus', 'allocate',
-      'budget', 'spend', 'commit resources', 'learning', 'education'
+    // Look for willingness to pay more or invest in quality
+    const willingnessIndicators = [
+      'yes, transparency is worth', 'premium', 'quality', 'organic', 'sustainable',
+      'pay more', 'invest', 'worth it', 'better quality', 'local'
     ]
     
-    const luxuryIndicators = [
-      'premium', 'quality', 'artisanal', 'organic', 'sustainable',
-      'high-end', 'exclusive', 'custom', 'bespoke', 'curated'
+    // Look for budget consciousness but sustainability focus
+    const balancedIndicators = [
+      'sometimes, for certain', 'when available', 'try to', 'want to but budget'
     ]
     
-    let investmentCount = 0
-    let luxuryCount = 0
+    let willingnessCount = 0
+    let balancedCount = 0
     
     answers.forEach(answer => {
       const text = answer.value.toLowerCase()
-      investmentIndicators.forEach(indicator => {
-        if (text.includes(indicator)) investmentCount++
+      willingnessIndicators.forEach(indicator => {
+        if (text.includes(indicator)) willingnessCount += 1
       })
-      luxuryIndicators.forEach(indicator => {
-        if (text.includes(indicator)) luxuryCount++
+      balancedIndicators.forEach(indicator => {
+        if (text.includes(indicator)) balancedCount += 0.5
       })
+      
+      // Bonus for choosing higher commitment options
+      if (text.includes('yes, i buy local') || text.includes('always')) {
+        willingnessCount += 0.5
+      }
     })
     
-    const investmentScore = Math.min(1, investmentCount / answers.length)
-    const qualityScore = Math.min(1, luxuryCount / answers.length)
+    const resourceScore = Math.min(1, (willingnessCount + balancedCount) / Math.max(1, answers.length))
     
-    score = (investmentScore + qualityScore) / 2
-    return Math.max(0, Math.min(1, score))
+    console.log('Resource allocation components:', { willingnessCount, balancedCount, resourceScore })
+    return Math.max(0.2, Math.min(1, resourceScore)) // Minimum 0.2 to avoid too low scores
   }
   
   private calculateInfluenceRadius(answers: Answer[]): number {
-    let score = 0
+    // Give a baseline score since this is harder to detect from simple questions
+    let score = 0.4
     
-    const leadershipIndicators = [
-      'lead', 'manage', 'direct', 'influence', 'mentor', 'guide',
-      'team', 'organization', 'company', 'board', 'committee'
+    const influenceIndicators = [
+      'inspire', 'share', 'teach', 'recommend', 'influence', 'community',
+      'friends', 'family', 'local experience', 'immersive'
     ]
     
-    const networkIndicators = [
-      'network', 'community', 'connections', 'colleagues', 'partners',
-      'industry', 'peers', 'advisors', 'mentors', 'investors'
-    ]
-    
-    let leadershipCount = 0
-    let networkCount = 0
+    let influenceCount = 0
     
     answers.forEach(answer => {
       const text = answer.value.toLowerCase()
-      leadershipIndicators.forEach(indicator => {
-        if (text.includes(indicator)) leadershipCount++
+      influenceIndicators.forEach(indicator => {
+        if (text.includes(indicator)) influenceCount += 0.2
       })
-      networkIndicators.forEach(indicator => {
-        if (text.includes(indicator)) networkCount++
-      })
+      
+      // Bonus for choices that show community thinking
+      if (text.includes('local community support') || text.includes('immersive local')) {
+        influenceCount += 0.3
+      }
     })
     
-    const leadershipScore = Math.min(1, leadershipCount / answers.length)
-    const networkScore = Math.min(1, networkCount / answers.length)
+    score += Math.min(0.5, influenceCount / Math.max(1, answers.length))
     
-    score = (leadershipScore + networkScore) / 2
-    return Math.max(0, Math.min(1, score))
+    console.log('Influence radius components:', { influenceCount, score })
+    return Math.max(0.3, Math.min(1, score))
   }
   
   private calculateCommitmentIntensity(answers: Answer[]): number {
-    let score = 0
+    let score = 0.3 // Base score
     
-    const transformationIndicators = [
-      'transform', 'change', 'shift', 'evolve', 'revolutionize',
-      'reimagine', 'reinvent', 'reshape', 'redefine', 'breakthrough'
+    const deepCommitmentIndicators = [
+      'always', 'yes, i plan', 'worth the premium', 'renewable', 
+      'organic', 'preferred option', 'sustainable', 'ethical'
     ]
     
-    const legacyIndicators = [
-      'legacy', 'future', 'generations', 'impact', 'difference',
-      'purpose', 'mission', 'vision', 'calling', 'destiny'
+    const moderateCommitmentIndicators = [
+      'sometimes', 'when available', 'try to', 'interested to learn',
+      'general idea', 'mostly'
     ]
     
-    const sacrificeIndicators = [
-      'sacrifice', 'give up', 'trade off', 'prioritize', 'choose',
-      'difficult', 'challenge', 'commitment', 'dedication'
-    ]
-    
-    let transformationCount = 0
-    let legacyCount = 0
-    let sacrificeCount = 0
+    let deepCount = 0
+    let moderateCount = 0
     
     answers.forEach(answer => {
       const text = answer.value.toLowerCase()
-      transformationIndicators.forEach(indicator => {
-        if (text.includes(indicator)) transformationCount++
+      deepCommitmentIndicators.forEach(indicator => {
+        if (text.includes(indicator)) deepCount += 0.3
       })
-      legacyIndicators.forEach(indicator => {
-        if (text.includes(indicator)) legacyCount++
-      })
-      sacrificeIndicators.forEach(indicator => {
-        if (text.includes(indicator)) sacrificeCount++
+      moderateCommitmentIndicators.forEach(indicator => {
+        if (text.includes(indicator)) moderateCount += 0.15
       })
     })
     
-    const transformationScore = Math.min(1, transformationCount / answers.length)
-    const legacyScore = Math.min(1, legacyCount / answers.length)
-    const sacrificeScore = Math.min(1, sacrificeCount / answers.length)
+    score += Math.min(0.6, (deepCount + moderateCount) / Math.max(1, answers.length))
     
-    score = (transformationScore + legacyScore + sacrificeScore) / 3
-    return Math.max(0, Math.min(1, score))
+    console.log('Commitment intensity components:', { deepCount, moderateCount, score })
+    return Math.max(0.2, Math.min(1, score))
   }
   
   private calculateBehavioralConsistency(behavioralData: BehavioralData[]): number {
-    if (behavioralData.length < 2) return 1
+    if (behavioralData.length < 2) return 1.0 // Default to perfect consistency
     
     // Calculate variance in response times (lower variance = more consistent)
     const responseTimes = behavioralData.map(data => data.responseTime)
     const avgResponseTime = responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
     const variance = responseTimes.reduce((sum, time) => sum + Math.pow(time - avgResponseTime, 2), 0) / responseTimes.length
-    const consistencyScore = Math.max(0.7, 1 - (variance / 100)) // Min 0.7, max 1.0
+    const consistencyScore = Math.max(0.8, 1 - (variance / 100)) // Min 0.8, max 1.0 - more generous
     
-    return Math.min(1.3, consistencyScore * 1.1) // Allow slight boost for very consistent users
+    console.log('Behavioral consistency:', { avgResponseTime, variance, consistencyScore })
+    return Math.min(1.2, consistencyScore * 1.1) // Allow slight boost for very consistent users
   }
   
   private classifyLevel(score: number): CommitmentLevel {
-    if (score >= 76) return 'Visionary'
-    if (score >= 51) return 'Catalyst'  
-    if (score >= 26) return 'Advocate'
+    console.log('Classifying level for score:', score)
+    if (score >= 70) return 'Visionary'
+    if (score >= 45) return 'Catalyst'  
+    if (score >= 25) return 'Advocate'
     return 'Explorer'
   }
   

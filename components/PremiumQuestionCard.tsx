@@ -23,8 +23,8 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
       onAnswer(textAnswer)
       setTextAnswer('')
     } else if (question.type === 'mcq' && selectedOption) {
-      if (selectedOption === 'Other' && customAnswer.trim()) {
-        onAnswer(`Other: ${customAnswer}`)
+      if (selectedOption.toLowerCase().includes('other') && customAnswer.trim()) {
+        onAnswer(`${selectedOption}: ${customAnswer}`)
       } else {
         onAnswer(selectedOption)
       }
@@ -33,9 +33,9 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
       setShowCustomInput(false)
     } else if (question.type === 'mcq_text' && selectedOption) {
       let fullAnswer = selectedOption
-      if (selectedOption === 'Other' && customAnswer.trim()) {
-        fullAnswer = `Other: ${customAnswer}`
-      } else if (selectedOption === 'Other') {
+      if (selectedOption.toLowerCase().includes('other') && customAnswer.trim()) {
+        fullAnswer = `${selectedOption}: ${customAnswer}`
+      } else if (selectedOption.toLowerCase().includes('other')) {
         fullAnswer = customAnswer.trim()
       }
       
@@ -54,11 +54,11 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
   const canSubmit = () => {
     if (question.type === 'text') return textAnswer.trim()
     if (question.type === 'mcq') {
-      if (selectedOption === 'Other') return customAnswer.trim()
+      if (selectedOption?.toLowerCase().includes('other')) return customAnswer.trim()
       return selectedOption
     }
     if (question.type === 'mcq_text') {
-      if (selectedOption === 'Other') return customAnswer.trim()
+      if (selectedOption?.toLowerCase().includes('other')) return customAnswer.trim()
       return selectedOption
     }
     return false
@@ -66,7 +66,7 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
 
   const handleOptionSelect = (option: string) => {
     setSelectedOption(option)
-    if (option === 'Other') {
+    if (option.toLowerCase().includes('other')) {
       setShowCustomInput(true)
     } else {
       setShowCustomInput(false)
@@ -80,9 +80,9 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -30 }}
       transition={{ duration: 0.6, ease: [0.43, 0.13, 0.23, 0.96] }}
-      className="w-full max-w-4xl"
+      className="w-full max-w-4xl mx-auto"
     >
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl premium-shadow border border-white/20 p-5">
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl premium-shadow border border-white/20 p-4 sm:p-5 mx-2 sm:mx-0">
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-6 h-6 bg-forest-900 text-accent-pearl rounded-full flex items-center justify-center font-mono text-xs">
@@ -91,12 +91,12 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
             <div className="h-px bg-gradient-to-r from-forest-700 to-transparent flex-1" />
           </div>
           
-          <h2 className="font-serif text-lg text-forest-900 mb-2 leading-tight">
+          <h2 className="font-serif text-base sm:text-lg text-forest-900 mb-2 leading-tight">
             {question.text}
           </h2>
           
           {question.context && (
-            <p className="text-earth-stone text-xs leading-relaxed italic">
+            <p className="text-earth-stone text-xs sm:text-sm leading-relaxed italic">
               {question.context}
             </p>
           )}
@@ -106,13 +106,13 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
           {(question.type === 'mcq' || question.type === 'mcq_text') && question.options ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {[...question.options, 'Other'].map((option, index) => (
+                {question.options.map((option, index) => (
                   <motion.button
                     key={index}
                     whileHover={{ scale: 1.005 }}
                     whileTap={{ scale: 0.995 }}
                     onClick={() => handleOptionSelect(option)}
-                    className={`text-left p-2.5 rounded-lg transition-all duration-200 border text-xs ${
+                    className={`text-left p-3 sm:p-2.5 rounded-lg transition-all duration-200 border text-sm sm:text-xs min-h-[48px] sm:min-h-auto flex items-center ${
                       selectedOption === option
                         ? 'bg-forest-50 border-forest-700 text-forest-900 shadow-sm'
                         : 'bg-white/50 border-earth-sand hover:border-forest-500 hover:bg-forest-50/50'
@@ -195,9 +195,9 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
             whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}
             disabled={isLoading || !canSubmit()}
-            className="px-5 py-2 bg-forest-900 text-accent-pearl rounded-full font-medium text-xs
+            className="px-6 sm:px-5 py-3 sm:py-2 bg-forest-900 text-accent-pearl rounded-full font-medium text-sm sm:text-xs
                      hover:bg-forest-800 transition-all duration-300 disabled:opacity-50 
-                     disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                     disabled:cursor-not-allowed shadow-md hover:shadow-lg min-h-[48px] sm:min-h-auto touch-manipulation"
           >
             {isLoading ? (
               <span className="flex items-center gap-1.5">
