@@ -85,7 +85,9 @@ CRITICAL REQUIREMENTS:
         console.log('Full cleaned content:', cleanContent)
         
         try {
-          return JSON.parse(cleanContent)
+          const parsed = JSON.parse(cleanContent)
+          // Validate and clean the question to prevent multiple "Other" options
+          return this.validateAndCleanQuestion(parsed)
         } catch (parseError) {
           console.error('JSON parsing failed:', parseError)
           console.error('Content that failed to parse:', cleanContent)
@@ -114,21 +116,78 @@ CRITICAL REQUIREMENTS:
     }
   }
 
+  private validateAndCleanQuestion(question: any): any {
+    if (!question.options || !Array.isArray(question.options)) {
+      console.warn('Invalid question options, using fallback')
+      return question
+    }
+
+    // Remove duplicate "Other" options - keep only the first one
+    const otherIndices: number[] = []
+    question.options.forEach((option: string, index: number) => {
+      if (option.toLowerCase().includes('other') && option.toLowerCase().includes('specify')) {
+        otherIndices.push(index)
+      }
+    })
+
+    // If multiple "Other" options found, keep only the first one
+    if (otherIndices.length > 1) {
+      console.warn(`Found ${otherIndices.length} "Other" options, removing duplicates`)
+      // Remove duplicates in reverse order to maintain indices
+      for (let i = otherIndices.length - 1; i > 0; i--) {
+        question.options.splice(otherIndices[i], 1)
+      }
+    }
+
+    // Ensure exactly one "Other" option exists
+    const hasOther = question.options.some((option: string) => 
+      option.toLowerCase().includes('other') && option.toLowerCase().includes('specify')
+    )
+
+    if (!hasOther) {
+      // Add "Other" option if missing
+      question.options.push("Other (please specify)")
+    }
+
+    // Limit to max 5 options total
+    if (question.options.length > 5) {
+      question.options = question.options.slice(0, 5)
+      // Make sure "Other" is still the last option
+      const otherOption = question.options.find((opt: string) => 
+        opt.toLowerCase().includes('other') && opt.toLowerCase().includes('specify')
+      )
+      if (otherOption) {
+        question.options = question.options.filter((opt: string) => opt !== otherOption)
+        question.options.push(otherOption)
+      }
+    }
+
+    console.log('Validated question options:', question.options)
+    return question
+  }
+
   async generateNextQuestion(
     questionNumber: number,
     previousAnswers: Answer[],
     currentScore: number
   ) {
     try {
-      const context = previousAnswers.map((ans, i) => 
-        `Q${i+1}: ${ans.value}`
-      ).join('\n')
+      // Enhanced context with question history and custom responses
+      const context = previousAnswers.map((ans, i) => {
+        const customFlag = ans.isCustomResponse ? ' [CUSTOM RESPONSE - BUILD ON THIS]' : ''
+        return `Q${i+1}: "${ans.questionText}" → ${ans.value}${customFlag}`
+      }).join('\n')
+
+      // Identify custom responses for follow-up
+      const customResponses = previousAnswers.filter(ans => ans.isCustomResponse)
+      const customContext = customResponses.length > 0 
+        ? `\n\nIMPORTANT CUSTOM RESPONSES TO BUILD ON:\n${customResponses.map((ans, i) => 
+            `- "${ans.questionText}" → ${ans.value}`
+          ).join('\n')}` 
+        : ''
 
       // Extract previous question texts to avoid repetition
-      const previousQuestionTexts = previousAnswers.map((ans, i) => {
-        // This is a simplified approach - in a real implementation you'd store question texts
-        return `Question ${i+1}` // placeholder
-      })
+      const previousQuestionTexts = previousAnswers.map(ans => ans.questionText)
 
       // Track topics to enforce diversity
       const getQuestionTopic = (questionText: string) => {
@@ -143,14 +202,10 @@ CRITICAL REQUIREMENTS:
       }
 
       // Analyze last 2 questions for topic repetition
-      const lastTwoTopics = previousAnswers.slice(-2).map((_, i) => {
-        // This is a simplified approach - in a real implementation you'd want to store question topics
-        return 'Previous Topic' 
-      })
+      const lastTwoTopics = previousAnswers.slice(-2).map(ans => getQuestionTopic(ans.questionText))
       
-      const topicCounts = previousAnswers.reduce((acc, ans, i) => {
-        // Simplified topic counting - you'd want to enhance this
-        const topic = getQuestionTopic(ans.value)
+      const topicCounts = previousAnswers.reduce((acc, ans) => {
+        const topic = getQuestionTopic(ans.questionText)
         acc[topic] = (acc[topic] || 0) + 1
         return acc
       }, {} as Record<string, number>)
@@ -159,42 +214,64 @@ CRITICAL REQUIREMENTS:
         messages: [
           {
             role: "system",
-            content: `You are a sustainability consultant asking simple, factual questions. Focus on concrete behaviors and practices, not abstract concepts.
+            content: `You are a sustainability consultant creating question ${questionNumber} of 10. Focus on concrete behaviors and everyday sustainability practices.
 
-QUESTION APPROACH:
-- Ask about specific, observable behaviors
-- Focus on everyday sustainability practices
-- Build on previous answers to create logical flow
-- Keep questions simple and relatable
+CRITICAL RULES:
+1. NEVER REPEAT ANY PREVIOUS QUESTION - Each question must be completely unique
+2. BUILD ON CUSTOM RESPONSES - If someone provided detailed "Other" responses, ask follow-up questions about those specific details
+3. CREATE LOGICAL FLOW - Connect new questions to previous answers naturally
+4. ALWAYS provide exactly 5 options with "Other (please specify)" as the 5th option
 
-SAMPLE QUESTION TYPES:
-- Food: "Do you know where your vegetables come from?" "Do you eat seasonal vegetables?"
-- Water: "Do you know where your water comes from?" "Do you carry your water bottle to the airport?"
-- Travel: "Where did you last go for holiday?" "How would you classify your last holiday?"
-- Consumption: "Are you willing to pay more for knowing the source of your food?"
+PREVIOUS QUESTIONS ASKED (DO NOT REPEAT ANY OF THESE):
+${previousQuestionTexts.map((q, i) => `${i+1}. "${q}"`).join('\n')}
 
-ALWAYS:
-- Respond with valid JSON only
-- Ask simple, factual questions
-- Build logical question flow based on previous answers
-- Avoid repeating topics already covered`
+TOPIC COVERAGE STATUS:
+${Object.entries(topicCounts).map(([topic, count]) => `- ${topic}: ${count} question(s)`).join('\n')}
+
+QUESTION FLOW STRATEGY:
+- Questions 1-3: Basic sustainability awareness (food, water, waste)
+- Questions 4-6: Consumption patterns (shopping, brands, transportation)  
+- Questions 7-8: Home & energy practices
+- Questions 9-10: Community involvement & future planning
+
+SAMPLE GOOD QUESTIONS (for reference - don't copy exactly):
+- "Do you know where your vegetables come from?"
+- "Do you carry your water bottle when traveling?"
+- "How do you handle electronic waste?"
+- "Do you buy second-hand clothing?"
+
+ALWAYS respond with valid JSON in this exact format:
+{
+  "text": "Simple, factual sustainability question",
+  "type": "mcq", 
+  "options": ["Option 1", "Option 2", "Option 3", "Option 4", "Other (please specify)"],
+  "context": "Brief explanation of why this matters",
+  "id": "native-q-${questionNumber}",
+  "multiSelect": false,
+  "encourageOther": "Encourage specific details"
+}`
           },
           {
             role: "user",
-            content: `Create sustainability question ${questionNumber} that builds logically on the previous answers.
+            content: `Create sustainability question ${questionNumber} that builds logically on the conversation flow.
 
-Previous answers:
-${context}
+CONVERSATION HISTORY WITH QUESTIONS AND ANSWERS:
+${context}${customContext}
 
-Score: ${currentScore}
-Question number: ${questionNumber}/10
+CURRENT SCORE: ${currentScore}/100
+QUESTION NUMBER: ${questionNumber}/10
 
-TOPIC ANALYSIS:
-- Ensure no more than 2 questions on same topic
-- Topics covered in previous questions: ${Object.keys(topicCounts).length > 0 ? Object.entries(topicCounts).map(([topic, count]) => `${topic} (${count})`).join(', ') : 'None yet'}
-- Available fresh topics: Food & Diet, Water, Travel, Consumption, Energy & Home, Waste
+DEDUPLICATION CHECK:
+- Do NOT ask any variation of the ${previousQuestionTexts.length} questions already asked above
+- Ensure your question is completely different from all previous questions
+- If someone gave detailed "Other" responses above, ask specific follow-up questions about those details
 
-QUESTION DEDUPLICATION:
+TOPIC DIVERSIFICATION:
+- Topics already covered: ${Object.keys(topicCounts).length > 0 ? Object.entries(topicCounts).map(([topic, count]) => `${topic} (${count})`).join(', ') : 'None yet'}
+- Avoid topics with 2+ questions already
+- Fresh topics available: Food & Diet, Water, Travel, Consumption, Energy & Home, Waste, Fashion, Digital
+
+Create a completely unique question that naturally follows from the conversation above.
 - This is question ${questionNumber} of 10
 - You have already asked ${previousAnswers.length} questions
 - NEVER ask the exact same question twice
@@ -273,7 +350,9 @@ CRITICAL RULES:
         console.log('Next question cleaned content:', cleanContent)
         
         try {
-          return JSON.parse(cleanContent)
+          const parsed = JSON.parse(cleanContent)
+          // Validate and clean the question to prevent multiple "Other" options
+          return this.validateAndCleanQuestion(parsed)
         } catch (parseError) {
           console.error('Next question JSON parsing failed:', parseError)
           console.error('Next question content that failed:', cleanContent)

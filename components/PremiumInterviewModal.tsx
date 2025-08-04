@@ -72,8 +72,10 @@ export default function PremiumInterviewModal({ onComplete }: PremiumInterviewMo
 
     const newAnswer: Answer = {
       questionId: questions[currentQuestionIndex].id,
+      questionText: questions[currentQuestionIndex].text,
       value: answer,
-      timestamp: new Date()
+      timestamp: new Date(),
+      isCustomResponse: answer.toLowerCase().includes('other:')
     }
 
     const updatedAnswers = [...answers, newAnswer]

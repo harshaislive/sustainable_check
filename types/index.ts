@@ -11,8 +11,10 @@ export interface Question {
 
 export interface Answer {
   questionId: string
+  questionText: string  // Add question text for proper deduplication
   value: string
   timestamp: Date
+  isCustomResponse?: boolean  // Flag for "Other" responses
 }
 
 export interface Session {
