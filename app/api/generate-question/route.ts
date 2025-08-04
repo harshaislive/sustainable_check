@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { NativeSustainabilityCoordinator } from '@/lib/agents/native-openai-agents'
 import { AdaptiveQuestioningSystem } from '@/lib/commitment/adaptive-questions'
 import { Answer } from '@/types'
-import { BehavioralData } from '@/lib/commitment/behavioral-tracker'
+import { BehavioralData } from '@/lib/commitment/scoring-engine'
 
 export async function POST(request: Request) {
   try {

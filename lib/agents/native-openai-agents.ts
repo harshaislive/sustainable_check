@@ -1,6 +1,6 @@
 import { AzureOpenAI } from "openai"
 import { Answer } from '@/types'
-import { BehavioralData } from '@/lib/commitment/behavioral-tracker'
+import { BehavioralData } from '@/lib/commitment/scoring-engine'
 
 // Initialize Azure OpenAI client
 const client = new AzureOpenAI({
@@ -371,6 +371,18 @@ CRITICAL RULES:
           encourageOther: "Describe your travel style"
         }
       ]
+      
+      // Topic classification helper function
+      const getQuestionTopic = (questionText: string) => {
+        const text = questionText.toLowerCase()
+        if (text.includes('vegetable') || text.includes('food') || text.includes('eat') || text.includes('seasonal')) return 'Food & Diet'
+        if (text.includes('water') || text.includes('bottle')) return 'Water'
+        if (text.includes('holiday') || text.includes('travel') || text.includes('transport')) return 'Travel'
+        if (text.includes('pay') || text.includes('brand') || text.includes('buy') || text.includes('purchase')) return 'Consumption'
+        if (text.includes('energy') || text.includes('home') || text.includes('appliance')) return 'Energy & Home'
+        if (text.includes('waste') || text.includes('recycle') || text.includes('compost')) return 'Waste'
+        return 'General'
+      }
       
       // Select fallback ensuring topic diversity
       const usedTopics = previousAnswers.slice(-2).map(ans => getQuestionTopic(ans.value))

@@ -1,9 +1,9 @@
 import { AzureChatOpenAI } from "@langchain/openai"
 import { ChatPromptTemplate } from "@langchain/core/prompts"
-import { RunnableSequence } from "@langchain/core/runnables"
+import { Runnable } from "@langchain/core/runnables"
 import { StringOutputParser } from "@langchain/core/output_parsers"
 import { Answer } from '@/types'
-import { BehavioralData } from '@/lib/commitment/behavioral-tracker'
+import { BehavioralData } from '@/lib/commitment/scoring-engine'
 
 // Initialize Azure OpenAI configuration for LangChain
 const azureConfig = {
@@ -17,7 +17,7 @@ const azureConfig = {
 
 // QUESTION GENERATOR AGENT
 export class QuestionGeneratorAgent {
-  private chain: RunnableSequence
+  private chain: Runnable<any, string>
   
   constructor() {
     const llm = new AzureChatOpenAI(azureConfig)
@@ -206,7 +206,7 @@ Return JSON: {
 
 // BEHAVIORAL ANALYST AGENT
 export class BehavioralAnalystAgent {
-  private chain: RunnableSequence
+  private chain: Runnable<any, string>
   
   constructor() {
     const llm = new AzureChatOpenAI(azureConfig)
@@ -307,7 +307,7 @@ Return as JSON: {
 
 // REPORT GENERATOR AGENT
 export class ReportGeneratorAgent {
-  private chain: RunnableSequence
+  private chain: Runnable<any, string>
   
   constructor() {
     const llm = new AzureChatOpenAI(azureConfig)

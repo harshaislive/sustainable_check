@@ -6,7 +6,8 @@ import { Question, Answer } from '@/types'
 import PremiumQuestionCard from './PremiumQuestionCard'
 import PremiumQuotePanel from './PremiumQuotePanel'
 import PremiumProgressBar from './PremiumProgressBar'
-import { BehavioralTracker, BehavioralData } from '@/lib/commitment/behavioral-tracker'
+import { BehavioralTracker } from '@/lib/commitment/behavioral-tracker'
+import { BehavioralData } from '@/lib/commitment/scoring-engine'
 import { CommitmentScoringEngine } from '@/lib/commitment/scoring-engine'
 
 interface PremiumInterviewModalProps {

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { NativeSustainabilityCoordinator } from '@/lib/agents/native-openai-agents'
 import { CommitmentScoringEngine } from '@/lib/commitment/scoring-engine'
 import { Answer, ReportCard } from '@/types'
-import { BehavioralData } from '@/lib/commitment/behavioral-tracker'
+import { BehavioralData } from '@/lib/commitment/scoring-engine'
 
 export async function POST(request: Request) {
   try {
@@ -31,8 +31,29 @@ export async function POST(request: Request) {
     
     // Fallback to basic report generation
     const report: ReportCard = {
-      id: `report-${Date.now()}`,
-      summary: `Based on your responses, you demonstrate "${commitmentScore.level}" level commitment to sustainability with a score of ${commitmentScore.finalScore}.`,
+      overallScore: commitmentScore.finalScore,
+      categories: [
+        {
+          name: "Action Velocity",
+          score: Math.round(commitmentScore.actionVelocity * 100),
+          description: getVelocityInsight(commitmentScore.actionVelocity)
+        },
+        {
+          name: "Resource Allocation", 
+          score: Math.round(commitmentScore.resourceAllocation * 100),
+          description: getAllocationInsight(commitmentScore.resourceAllocation)
+        },
+        {
+          name: "Influence Radius",
+          score: Math.round(commitmentScore.influenceRadius * 100), 
+          description: getInfluenceInsight(commitmentScore.influenceRadius)
+        },
+        {
+          name: "Commitment Intensity",
+          score: Math.round(commitmentScore.commitmentIntensity * 100),
+          description: getIntensityInsight(commitmentScore.commitmentIntensity)
+        }
+      ],
       insights: [
         `Your action velocity score of ${Math.round(commitmentScore.actionVelocity * 100)}% indicates ${getVelocityInsight(commitmentScore.actionVelocity)}.`,
         `Resource allocation patterns suggest ${getAllocationInsight(commitmentScore.resourceAllocation)}.`,
@@ -40,10 +61,7 @@ export async function POST(request: Request) {
         `Commitment intensity reflects ${getIntensityInsight(commitmentScore.commitmentIntensity)}.`
       ],
       recommendations: getRecommendations(commitmentScore.level),
-      score: commitmentScore.finalScore,
-      level: commitmentScore.level,
-      confidence: commitmentScore.confidence,
-      timestamp: new Date()
+      personalityProfile: `You are a ${commitmentScore.level} with a commitment score of ${commitmentScore.finalScore}. This indicates ${getLevelDescription(commitmentScore.level)}.`
     }
     
     return NextResponse.json({ report, commitmentScore })
@@ -82,7 +100,7 @@ function getIntensityInsight(score: number): string {
 }
 
 function getRecommendations(level: string): string[] {
-  const recommendations = {
+  const recommendations: Record<string, string[]> = {
     'Explorer': [
       "Start with small, achievable sustainability changes in your daily routine",
       "Connect with like-minded communities for inspiration and support",
@@ -106,4 +124,15 @@ function getRecommendations(level: string): string[] {
   }
   
   return recommendations[level] || recommendations['Explorer']
+}
+
+function getLevelDescription(level: string): string {
+  const descriptions: Record<string, string> = {
+    'Explorer': 'a curious mind beginning the sustainability journey with growing awareness',
+    'Advocate': 'personally committed to sustainable transformation with clear values',
+    'Catalyst': 'a natural leader prepared to influence meaningful change in your sphere',
+    'Visionary': 'a systemic change maker ready to transform industries and create lasting impact'
+  }
+  
+  return descriptions[level] || descriptions['Explorer']
 }
