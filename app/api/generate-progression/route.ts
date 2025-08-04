@@ -12,8 +12,15 @@ const client = new AzureOpenAI({
 })
 
 export async function POST(request: Request) {
+  let requestData: { answers?: Answer[], commitmentScore?: CommitmentScore } = {}
+  
   try {
-    const { answers, commitmentScore } = await request.json()
+    requestData = await request.json()
+    const { answers = [], commitmentScore } = requestData
+    
+    if (!commitmentScore) {
+      throw new Error('Missing commitment score data')
+    }
     
     const answersText = answers.map((ans: Answer, i: number) => 
       `Q${i+1}: ${ans.value}`
@@ -82,13 +89,15 @@ Focus on specific actions I can take based on my responses, not general advice. 
   } catch (error) {
     console.error('Error generating progression guidance:', error)
     
-    // Fallback guidance
-    const nextLevel = getNextLevel(request.body?.commitmentScore?.level || 'Explorer')
-    const targetScore = getTargetScore(request.body?.commitmentScore?.level || 'Explorer')
+    // Use already parsed data for fallback
+    const currentLevel = requestData.commitmentScore?.level || 'Explorer'
+    const currentScore = requestData.commitmentScore?.finalScore || 0
+    const nextLevel = getNextLevel(currentLevel)
+    const targetScore = getTargetScore(currentLevel)
     
     return NextResponse.json({
-      guidance: getFallbackGuidance(request.body?.commitmentScore?.level || 'Explorer'),
-      pointsNeeded: targetScore - (request.body?.commitmentScore?.finalScore || 0),
+      guidance: getFallbackGuidance(currentLevel),
+      pointsNeeded: Math.max(0, targetScore - currentScore),
       targetScore,
       nextLevel
     })
