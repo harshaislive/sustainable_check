@@ -16,6 +16,7 @@
     "@azure/openai": "^2.0.0",
     "@langchain/core": "^0.3.66",
     "@langchain/openai": "^0.6.3",
+    "@react-pdf/renderer": "^4.3.1",
     "@supabase/supabase-js": "^2.53.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^24.1.0",
@@ -24,15 +25,27 @@
     "autoprefixer": "^10.4.21",
     "crewai": "^1.0.1",
     "framer-motion": "^12.23.12",
+    "html2canvas": "^1.4.1",
+    "jose": "^6.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.3",
     "langchain": "^0.3.30",
     "lucide-react": "^0.535.0",
+    "marked": "^16.4.0",
     "next": "^15.4.5",
+    "nodemailer": "^7.0.9",
     "openai": "^4.104.0",
     "postcss": "^8.5.6",
+    "puppeteer": "^19.11.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.61.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^7.0.2"
   }
 }

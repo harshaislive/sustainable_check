@@ -4,19 +4,50 @@ import { useState, useEffect } from 'react'
 import PremiumInterviewModal from '@/components/PremiumInterviewModal'
 import PremiumReportCard from '@/components/PremiumReportCard'
 import LandingPage from '@/components/LandingPage'
+import UserInfoForm from '@/components/UserInfoForm'
 import MomentOfTruthReveal from '@/components/MomentOfTruthReveal'
 import { Answer, ReportCard as ReportCardType } from '@/types'
 import { CommitmentScore } from '@/lib/commitment/scoring-engine'
 
 export default function Home() {
-  const [stage, setStage] = useState<'landing' | 'interview' | 'revealing' | 'report'>('landing')
+  const [stage, setStage] = useState<'landing' | 'userInfo' | 'interview' | 'revealing' | 'report'>('landing')
   const [reportData, setReportData] = useState<ReportCardType | null>(null)
   const [commitmentScore, setCommitmentScore] = useState<CommitmentScore | null>(null)
   const [isGeneratingReport, setIsGeneratingReport] = useState(false)
   const [userAnswers, setUserAnswers] = useState<Answer[]>([])
+  const [userInfoId, setUserInfoId] = useState<string | null>(null)
 
   const handleStartInterview = () => {
-    setStage('interview')
+    setStage('userInfo')
+  }
+
+  const handleUserInfoSubmit = async (userInfo: { name: string; email: string; phone: string }) => {
+    try {
+      const response = await fetch('/api/save-user-info', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userInfo)
+      })
+      const result = await response.json()
+
+      if (result.success) {
+        setUserInfoId(result.userInfoId)
+        // Store user info in localStorage for email functionality
+        localStorage.setItem('userName', userInfo.name)
+        localStorage.setItem('userEmail', userInfo.email)
+        setStage('interview')
+      } else {
+        console.error('Failed to save user info:', result.error)
+        alert('Failed to save your information. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error saving user info:', error)
+      alert('An error occurred. Please try again.')
+    }
+  }
+
+  const handleUserInfoBack = () => {
+    setStage('landing')
   }
 
   const handleInterviewComplete = async (answers: Answer[], behavioralData: any[]) => {
@@ -25,14 +56,14 @@ export default function Home() {
       console.log('Report already being generated, ignoring duplicate')
       return
     }
-    
+
     setUserAnswers(answers) // Store answers for progression guidance
     setIsGeneratingReport(true)
     try {
       const response = await fetch('/api/generate-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers, behavioralData })
+        body: JSON.stringify({ answers, behavioralData, userInfoId })
       })
       const { report, commitmentScore } = await response.json()
       setReportData(report)
@@ -76,16 +107,22 @@ export default function Home() {
   return (
     <>
       {stage === 'landing' && <LandingPage onStart={handleStartInterview} />}
+      {stage === 'userInfo' && (
+        <UserInfoForm
+          onSubmit={handleUserInfoSubmit}
+          onBack={handleUserInfoBack}
+        />
+      )}
       {stage === 'interview' && <PremiumInterviewModal onComplete={handleInterviewComplete} />}
       {stage === 'revealing' && commitmentScore && (
-        <MomentOfTruthReveal 
+        <MomentOfTruthReveal
           score={commitmentScore}
           onComplete={handleRevealComplete}
         />
       )}
       {stage === 'report' && reportData && commitmentScore && (
-        <PremiumReportCard 
-          report={reportData} 
+        <PremiumReportCard
+          report={reportData}
           commitmentScore={commitmentScore}
           onRestart={handleRestart}
           answers={userAnswers}

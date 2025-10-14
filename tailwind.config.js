@@ -30,9 +30,11 @@ module.exports = {
         }
       },
       fontFamily: {
-        serif: ['Playfair Display', 'Georgia', 'serif'],
-        sans: ['Inter', 'Helvetica Neue', 'sans-serif'],
-        mono: ['Space Mono', 'Courier New', 'monospace'],
+        serif: ['ABC Arizona Flare Regular', 'sans-serif'],
+        sans: ['ABC Arizona Flare Regular', 'Inter', 'Helvetica Neue', 'sans-serif'],
+        mono: ['ABC Arizona Flare Regular', 'sans-serif'],
+        'arizona-light': ['ABC Arizona Flare Light', 'sans-serif'],
+        'arizona': ['ABC Arizona Flare Regular', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

@@ -3,10 +3,11 @@ import { NativeSustainabilityCoordinator } from '@/lib/agents/native-openai-agen
 import { CommitmentScoringEngine } from '@/lib/commitment/scoring-engine'
 import { Answer, ReportCard } from '@/types'
 import { BehavioralData } from '@/lib/commitment/scoring-engine'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(request: Request) {
   try {
-    const { answers, behavioralData } = await request.json()
+    const { answers, behavioralData, userInfoId } = await request.json()
     
     // Calculate commitment score using our scoring engine
     const scoringEngine = new CommitmentScoringEngine()
@@ -14,7 +15,55 @@ export async function POST(request: Request) {
       answers as Answer[],
       behavioralData as BehavioralData[]
     )
-    
+
+    // Get user email from user_info
+    let userEmail = null
+    if (userInfoId) {
+      try {
+        const { data: userInfo } = await supabase
+          .from('user_info')
+          .select('email')
+          .eq('id', userInfoId)
+          .single()
+
+        if (userInfo) {
+          userEmail = userInfo.email
+        }
+      } catch (error) {
+        console.error('Error fetching user email:', error)
+      }
+    }
+
+    // Create session in Supabase with answers and commitment_score
+    let sessionId = null
+    if (userInfoId) {
+      try {
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('sessions')
+          .insert([
+            {
+              user_info_id: userInfoId,
+              user_email: userEmail,
+              started_at: new Date().toISOString(),
+              completed_at: new Date().toISOString(),
+              answers: answers,
+              commitment_score: commitmentScore
+            }
+          ])
+          .select()
+          .single()
+
+        if (!sessionError && sessionData) {
+          sessionId = sessionData.id
+          console.log('Session created with ID:', sessionId)
+        } else {
+          console.error('Error creating session:', sessionError)
+        }
+      } catch (sessionDbError) {
+        console.error('Database error creating session:', sessionDbError)
+      }
+    }
+
     // Try native OpenAI agents first
     try {
       const coordinator = new NativeSustainabilityCoordinator()
@@ -23,7 +72,28 @@ export async function POST(request: Request) {
         behavioralData as BehavioralData[],
         commitmentScore
       )
-      
+
+      // Save report to Supabase if session exists
+      if (sessionId && result.report) {
+        try {
+          await supabase
+            .from('report_cards')
+            .insert([
+              {
+                session_id: sessionId,
+                overall_score: result.report.overallScore,
+                categories: result.report.categories,
+                insights: result.report.insights,
+                recommendations: result.report.recommendations,
+                personality_profile: result.report.personalityProfile
+              }
+            ])
+          console.log('Report saved to database')
+        } catch (reportDbError) {
+          console.error('Error saving report to database:', reportDbError)
+        }
+      }
+
       return NextResponse.json(result)
     } catch (nativeError) {
       console.warn('Native OpenAI agents failed for report generation:', nativeError)
@@ -39,13 +109,13 @@ export async function POST(request: Request) {
           description: getVelocityInsight(commitmentScore.actionVelocity)
         },
         {
-          name: "Resource Allocation", 
+          name: "Resource Allocation",
           score: Math.round(commitmentScore.resourceAllocation * 100),
           description: getAllocationInsight(commitmentScore.resourceAllocation)
         },
         {
           name: "Influence Radius",
-          score: Math.round(commitmentScore.influenceRadius * 100), 
+          score: Math.round(commitmentScore.influenceRadius * 100),
           description: getInfluenceInsight(commitmentScore.influenceRadius)
         },
         {
@@ -63,7 +133,28 @@ export async function POST(request: Request) {
       recommendations: getRecommendations(commitmentScore.level),
       personalityProfile: `You are a ${commitmentScore.level} with a commitment score of ${commitmentScore.finalScore}. This indicates ${getLevelDescription(commitmentScore.level)}.`
     }
-    
+
+    // Save fallback report to Supabase if session exists
+    if (sessionId) {
+      try {
+        await supabase
+          .from('report_cards')
+          .insert([
+            {
+              session_id: sessionId,
+              overall_score: report.overallScore,
+              categories: report.categories,
+              insights: report.insights,
+              recommendations: report.recommendations,
+              personality_profile: report.personalityProfile
+            }
+          ])
+        console.log('Fallback report saved to database')
+      } catch (reportDbError) {
+        console.error('Error saving fallback report to database:', reportDbError)
+      }
+    }
+
     return NextResponse.json({ report, commitmentScore })
   } catch (error) {
     console.error('Error generating report:', error)

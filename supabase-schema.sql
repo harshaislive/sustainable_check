@@ -1,6 +1,16 @@
+-- Create user_info table to store user contact details
+CREATE TABLE IF NOT EXISTS user_info (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create sessions table
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_info_id UUID REFERENCES user_info(id) ON DELETE SET NULL,
     user_id UUID,
     started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     completed_at TIMESTAMP WITH TIME ZONE,
@@ -47,6 +57,7 @@ CREATE INDEX idx_answers_session_id ON answers(session_id);
 CREATE INDEX idx_report_cards_session_id ON report_cards(session_id);
 
 -- Enable Row Level Security
+ALTER TABLE user_info ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE answers ENABLE ROW LEVEL SECURITY;
@@ -54,6 +65,12 @@ ALTER TABLE report_cards ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (adjust based on your authentication setup)
 -- For anonymous access (if no auth is set up yet)
+CREATE POLICY "Allow anonymous insert on user_info" ON user_info
+    FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow anonymous select on user_info" ON user_info
+    FOR SELECT USING (true);
+
 CREATE POLICY "Allow anonymous insert on sessions" ON sessions
     FOR INSERT WITH CHECK (true);
 

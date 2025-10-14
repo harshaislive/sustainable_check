@@ -13,62 +13,63 @@ const client = new AzureOpenAI({
 export class NativeQuestionAgent {
   async generateInitialQuestion() {
     try {
+      // STRATEGY 2: SUSTAINABILITY WHEEL - Question 1 is always about "Food & Diet"
       const response = await client.chat.completions.create({
         messages: [
           {
             role: "system",
-            content: `You are a sustainability consultant conducting a comprehensive assessment covering ALL aspects of personal sustainability. 
+            content: `You are a sustainability consultant using the SUSTAINABILITY WHEEL methodology for comprehensive assessment.
 
-TOPICS TO COVER (rotate through these, don't repeat):
-1. Food Sources & Diet: Do you know where your vegetables come from? Do you eat seasonal vegetables? Is your food residue free?
-2. Water: Do you know where your water comes from? Do you carry your water bottle to the airport?
-3. Transportation & Travel: Where did you last go for holiday? How would you classify your last holiday?
-4. Consumption: Are you willing to pay more for knowing the source of your food? Which brands represent your personality best?
-5. Energy & Home: renewable energy, efficiency, smart home tech
-6. Waste & Recycling: zero waste efforts, composting, circular economy
-7. Fashion & Shopping: fast fashion, sustainable brands, minimalism
-8. Finance: ESG investing, sustainable banking, carbon offsets
-9. Community: activism, education, local initiatives
-10. Digital: e-waste, cloud usage, digital minimalism
+🎯 MANDATORY TOPIC FOR QUESTION 1:
+Topic: **Food & Diet**
+Keywords: food, vegetables, eat, diet, organic, local, seasonal, meat, plant-based
+Example questions:
+- "Do you know where your vegetables come from?"
+- "How often do you eat plant-based meals?"
+- "Do you buy organic or local produce?"
 
-ALWAYS:
-- Respond with valid JSON only
-- Make questions progressively deeper
-- Include "Other (please specify)" as the last option with encouragement`
+This is QUESTION 1 of 10 in the Sustainability Wheel covering these topics in order:
+1. Food & Diet → 2. Water → 3. Energy → 4. Transportation → 5. Waste
+6. Fashion & Shopping → 7. Finance → 8. Community → 9. Digital → 10. Future Vision
+
+CRITICAL RULES:
+- Question MUST be about Food & Diet (vegetables, eating habits, food sources)
+- Make it simple, practical, and behavior-focused
+- ALWAYS provide exactly 5 options
+- 5th option MUST be "Other (please specify)"
+- Use "mcq" type only
+- Keep it concrete and observable
+
+Return valid JSON only.`
           },
           {
-            role: "user", 
-            content: `Create a simple, factual opening question about sustainability basics. Focus on concrete, everyday practices rather than abstract concepts.
+            role: "user",
+            content: `Create the opening question about **Food & Diet** (MANDATORY for Q1).
 
-Examples of good questions:
-- "Do you know where your vegetables come from?"
-- "Do you carry your water bottle when traveling?"
-- "Are you willing to pay more for knowing the source of your food?"
+Make it simple, factual, and about concrete food/eating behaviors.
 
 Return only this JSON format:
 {
-  "text": "Your simple, factual sustainability question",
+  "text": "Your simple question about food/diet",
   "type": "mcq",
   "options": [
-    "First specific, concrete option",
+    "First specific option",
     "Second meaningful choice",
     "Third practical option",
     "Fourth realistic choice",
     "Other (please specify)"
   ],
-  "context": "Brief context about the importance of this practice.",
+  "context": "Brief explanation why Food & Diet matters for sustainability",
   "id": "native-q-1",
   "multiSelect": false,
-  "encourageOther": "Share your specific approach"
+  "encourageOther": "Share your specific food approach"
 }
 
-CRITICAL REQUIREMENTS:
-- ALWAYS provide exactly 5 options
-- The 5th option MUST ALWAYS be "Other (please specify)" - never add a second "Other" option
-- Use "mcq" for single selection only
-- Ask simple, factual questions about concrete behaviors
-- Make options specific and realistic
-- Focus on everyday sustainability practices`
+REQUIREMENTS:
+- Focus on Food & Diet only
+- Use keywords: food, vegetables, eat, or diet
+- 5 options total, last one is "Other (please specify)"
+- Simple and factual`
           }
         ],
         max_completion_tokens: 1000,
@@ -172,170 +173,148 @@ CRITICAL REQUIREMENTS:
     currentScore: number
   ) {
     try {
-      // Enhanced context with question history and custom responses
-      const context = previousAnswers.map((ans, i) => {
-        const customFlag = ans.isCustomResponse ? ' [CUSTOM RESPONSE - BUILD ON THIS]' : ''
-        return `Q${i+1}: "${ans.questionText}" → ${ans.value}${customFlag}`
-      }).join('\n')
+      // STRATEGY 2: SUSTAINABILITY WHEEL - Enforced Topic Diversity
+      // Each of 10 questions covers a different sustainability pillar
 
-      // Identify custom responses for follow-up
-      const customResponses = previousAnswers.filter(ans => ans.isCustomResponse)
-      const customContext = customResponses.length > 0 
-        ? `\n\nIMPORTANT CUSTOM RESPONSES TO BUILD ON:\n${customResponses.map((ans, i) => 
-            `- "${ans.questionText}" → ${ans.value}`
-          ).join('\n')}` 
-        : ''
+      const mandatoryTopics = [
+        {
+          id: 1,
+          topic: 'Food & Diet',
+          keywords: ['food', 'vegetables', 'eat', 'diet', 'organic', 'local', 'seasonal', 'meat', 'plant-based'],
+          examples: ['Do you know where your vegetables come from?', 'How often do you eat plant-based meals?', 'Do you buy organic or local produce?']
+        },
+        {
+          id: 2,
+          topic: 'Water',
+          keywords: ['water', 'bottle', 'conservation', 'tap', 'drink', 'hydration'],
+          examples: ['Do you carry a reusable water bottle?', 'How do you conserve water at home?', 'Do you know where your water comes from?']
+        },
+        {
+          id: 3,
+          topic: 'Energy',
+          keywords: ['energy', 'electricity', 'power', 'heating', 'cooling', 'solar', 'LED', 'appliances', 'thermostat'],
+          examples: ['How do you manage home energy use?', 'Do you use LED bulbs?', 'Have you considered renewable energy?']
+        },
+        {
+          id: 4,
+          topic: 'Transportation',
+          keywords: ['transport', 'car', 'drive', 'commute', 'bike', 'walk', 'public', 'bus', 'train', 'travel', 'flight'],
+          examples: ['How do you commute to work?', 'How often do you use public transportation?', 'Do you carpool or bike?']
+        },
+        {
+          id: 5,
+          topic: 'Waste',
+          keywords: ['waste', 'recycle', 'compost', 'trash', 'garbage', 'zero-waste', 'disposal', 'landfill'],
+          examples: ['How do you handle food waste?', 'Do you compost?', 'What do you recycle at home?']
+        },
+        {
+          id: 6,
+          topic: 'Fashion & Shopping',
+          keywords: ['clothing', 'clothes', 'fashion', 'shopping', 'buy', 'purchase', 'second-hand', 'thrift', 'fast fashion'],
+          examples: ['Do you buy second-hand clothing?', 'How often do you shop for new clothes?', 'What guides your clothing choices?']
+        },
+        {
+          id: 7,
+          topic: 'Finance',
+          keywords: ['money', 'invest', 'bank', 'finance', 'ESG', 'ethical', 'savings', 'budget', 'spend'],
+          examples: ['Do you consider ESG factors in investing?', 'Do you use ethical banking?', 'Are you willing to pay more for sustainable products?']
+        },
+        {
+          id: 8,
+          topic: 'Community',
+          keywords: ['community', 'local', 'volunteer', 'activism', 'education', 'teach', 'share', 'influence', 'neighbors'],
+          examples: ['Are you involved in local sustainability initiatives?', 'Do you teach others about sustainability?', 'How do you influence your community?']
+        },
+        {
+          id: 9,
+          topic: 'Digital',
+          keywords: ['digital', 'electronic', 'e-waste', 'devices', 'phone', 'computer', 'cloud', 'streaming', 'data'],
+          examples: ['How do you handle electronic waste?', 'Do you consider digital carbon footprint?', 'How long do you keep devices before upgrading?']
+        },
+        {
+          id: 10,
+          topic: 'Future Vision',
+          keywords: ['future', 'goal', 'change', 'improve', 'plan', 'vision', 'commitment', 'next', 'willing'],
+          examples: ['What sustainability goal do you want to achieve next year?', 'How willing are you to make bigger changes?', 'What would you like to improve?']
+        }
+      ]
 
-      // Extract previous question texts to avoid repetition
-      const previousQuestionTexts = previousAnswers.map(ans => ans.questionText)
+      // Determine which topic should be covered for this question number
+      const assignedTopic = mandatoryTopics[questionNumber - 1]
 
-      // Track topics to enforce diversity
-      const getQuestionTopic = (questionText: string) => {
-        const text = questionText.toLowerCase()
-        if (text.includes('vegetable') || text.includes('food') || text.includes('eat') || text.includes('seasonal')) return 'Food & Diet'
-        if (text.includes('water') || text.includes('bottle')) return 'Water'
-        if (text.includes('holiday') || text.includes('travel') || text.includes('transport')) return 'Travel'
-        if (text.includes('pay') || text.includes('brand') || text.includes('buy') || text.includes('purchase')) return 'Consumption'
-        if (text.includes('energy') || text.includes('home') || text.includes('appliance')) return 'Energy & Home'
-        if (text.includes('waste') || text.includes('recycle') || text.includes('compost')) return 'Waste'
-        return 'General'
+      if (!assignedTopic) {
+        throw new Error(`No topic assigned for question ${questionNumber}`)
       }
 
-      // Analyze last 2 questions for topic repetition
-      const lastTwoTopics = previousAnswers.slice(-2).map(ans => getQuestionTopic(ans.questionText))
-      
-      const topicCounts = previousAnswers.reduce((acc, ans) => {
-        const topic = getQuestionTopic(ans.questionText)
-        acc[topic] = (acc[topic] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
+      // Check if this topic has already been covered (failsafe)
+      const coveredTopics = previousAnswers.map((ans, i) => {
+        const qNum = i + 1
+        return mandatoryTopics[qNum - 1]?.topic || 'Unknown'
+      })
+
+      // Build context
+      const context = previousAnswers.map((ans, i) => {
+        const topicLabel = mandatoryTopics[i]?.topic || 'General'
+        return `Q${i+1} [${topicLabel}]: "${ans.questionText}" → ${ans.value}`
+      }).join('\n')
+
+      // Previous question texts for deduplication
+      const previousQuestionTexts = previousAnswers.map(ans => ans.questionText)
 
       const response = await client.chat.completions.create({
         messages: [
           {
             role: "system",
-            content: `You are a sustainability consultant creating question ${questionNumber} of 10. Focus on concrete behaviors and everyday sustainability practices.
+            content: `You are a sustainability consultant using the SUSTAINABILITY WHEEL methodology to ensure comprehensive assessment coverage.
+
+🎯 MANDATORY TOPIC FOR THIS QUESTION:
+Topic: **${assignedTopic.topic}**
+Keywords to include: ${assignedTopic.keywords.slice(0, 5).join(', ')}
+Example questions for inspiration: ${assignedTopic.examples.join(' | ')}
 
 CRITICAL RULES:
-1. NEVER REPEAT ANY PREVIOUS QUESTION - Each question must be completely unique
-2. BUILD ON CUSTOM RESPONSES - If someone provided detailed "Other" responses, ask follow-up questions about those specific details
-3. CREATE LOGICAL FLOW - Connect new questions to previous answers naturally
-4. ALWAYS provide exactly 5 options with "Other (please specify)" as the 5th option
+1. Your question MUST be about "${assignedTopic.topic}" - this is NON-NEGOTIABLE
+2. Do NOT stray into other topics - stay focused on ${assignedTopic.topic}
+3. NEVER REPEAT any previous question - each must be completely unique
+4. Make it practical, concrete, and behavior-focused
+5. ALWAYS provide exactly 5 options with "Other (please specify)" as the 5th option
 
-PREVIOUS QUESTIONS ASKED (DO NOT REPEAT ANY OF THESE):
+PREVIOUS QUESTIONS TO AVOID REPEATING:
 ${previousQuestionTexts.map((q, i) => `${i+1}. "${q}"`).join('\n')}
 
-TOPIC COVERAGE STATUS:
-${Object.entries(topicCounts).map(([topic, count]) => `- ${topic}: ${count} question(s)`).join('\n')}
+TOPICS ALREADY COVERED:
+${coveredTopics.map((t, i) => `Q${i+1}: ${t}`).join(', ')}
 
-QUESTION FLOW STRATEGY:
-- Questions 1-3: Basic sustainability awareness (food, water, waste)
-- Questions 4-6: Consumption patterns (shopping, brands, transportation)  
-- Questions 7-8: Home & energy practices
-- Questions 9-10: Community involvement & future planning
-
-SAMPLE GOOD QUESTIONS (for reference - don't copy exactly):
-- "Do you know where your vegetables come from?"
-- "Do you carry your water bottle when traveling?"
-- "How do you handle electronic waste?"
-- "Do you buy second-hand clothing?"
+SUSTAINABILITY WHEEL STRUCTURE (10 Pillars):
+1. Food & Diet → 2. Water → 3. Energy → 4. Transportation → 5. Waste
+6. Fashion & Shopping → 7. Finance → 8. Community → 9. Digital → 10. Future Vision
 
 ALWAYS respond with valid JSON in this exact format:
 {
-  "text": "Simple, factual sustainability question",
-  "type": "mcq", 
+  "text": "Simple, practical question about ${assignedTopic.topic}",
+  "type": "mcq",
   "options": ["Option 1", "Option 2", "Option 3", "Option 4", "Other (please specify)"],
-  "context": "Brief explanation of why this matters",
+  "context": "Brief explanation of why ${assignedTopic.topic} matters for sustainability",
   "id": "native-q-${questionNumber}",
   "multiSelect": false,
-  "encourageOther": "Encourage specific details"
+  "encourageOther": "Encourage specific details about ${assignedTopic.topic}"
 }`
           },
           {
             role: "user",
-            content: `Create sustainability question ${questionNumber} that builds logically on the conversation flow.
+            content: `Create question ${questionNumber} of 10 about **${assignedTopic.topic}** (MANDATORY TOPIC).
 
-CONVERSATION HISTORY WITH QUESTIONS AND ANSWERS:
-${context}${customContext}
+CONVERSATION HISTORY:
+${context}
 
-CURRENT SCORE: ${currentScore}/100
-QUESTION NUMBER: ${questionNumber}/10
+REQUIREMENTS:
+- Question MUST focus on "${assignedTopic.topic}"
+- Use these keywords naturally: ${assignedTopic.keywords.slice(0, 3).join(', ')}
+- Do NOT repeat any of the ${previousQuestionTexts.length} questions above
+- Keep it simple, factual, and actionable
+- Make options realistic and practical
 
-DEDUPLICATION CHECK:
-- Do NOT ask any variation of the ${previousQuestionTexts.length} questions already asked above
-- Ensure your question is completely different from all previous questions
-- If someone gave detailed "Other" responses above, ask specific follow-up questions about those details
-
-TOPIC DIVERSIFICATION:
-- Topics already covered: ${Object.keys(topicCounts).length > 0 ? Object.entries(topicCounts).map(([topic, count]) => `${topic} (${count})`).join(', ') : 'None yet'}
-- Avoid topics with 2+ questions already
-- Fresh topics available: Food & Diet, Water, Travel, Consumption, Energy & Home, Waste, Fashion, Digital
-
-Create a completely unique question that naturally follows from the conversation above.
-- This is question ${questionNumber} of 10
-- You have already asked ${previousAnswers.length} questions
-- NEVER ask the exact same question twice
-- Each question must be completely unique and different from all previous questions
-
-TOPIC DIVERSITY RULES:
-- NEVER ask more than 2 questions on the same topic
-- Count previous questions to ensure topic rotation
-- Force topic switches after 2 questions on same area
-
-ANALYZE THE PREVIOUS ANSWERS:
-- What topics have been covered already?
-- How many questions on each topic?
-- What NEW topic should be explored?
-- Ensure balanced coverage across different areas
-
-TOPIC ROTATION (never more than 2 questions each):
-- Food & Diet (vegetables, seasonal eating, food sources)
-- Water (sources, bottles, conservation)
-- Travel (holidays, transportation, style)
-- Consumption (willingness to pay, brand choices)
-- Energy & Home (appliances, renewable energy)
-- Waste (recycling, composting, reduction)
-
-MANDATORY TOPIC SWITCHING:
-If last 2 questions were on same topic, MUST switch to different topic
-
-ASK SIMPLE, FACTUAL QUESTIONS like:
-- "Do you know where your vegetables come from?"
-- "Do you eat seasonal vegetables?"
-- "Do you carry your water bottle to the airport?"
-- "Are you willing to pay more for knowing the source of your food?"
-- "Where did you last go for holiday?" (can be open-ended but provide MCQ options)
-- "How would you classify your last holiday?"
-
-Return JSON:
-{
-  "text": "Your simple, factual sustainability question",
-  "type": "mcq",
-  "options": [
-    "First specific, concrete option",
-    "Second realistic choice",
-    "Third practical option",
-    "Fourth meaningful choice",
-    "Other (please specify)"
-  ],
-  "context": "Brief context about why this matters.",
-  "id": "native-q-${questionNumber}",
-  "multiSelect": false,
-  "encourageOther": "Share your specific approach"
-}
-
-CRITICAL RULES:
-- ALWAYS provide exactly 5 options
-- The 5th option MUST ALWAYS be "Other (please specify)" - NEVER duplicate this
-- Use "mcq" type only
-- Ask simple, observable behavior questions
-- NEVER REPEAT THE EXACT SAME QUESTION - each question must be unique
-- ENFORCE TOPIC DIVERSITY: Never more than 2 questions on same topic
-- If any topic has 2+ questions, MUST choose different topic
-- Rotate through topics: Food → Water → Travel → Consumption → Energy → Waste
-- Keep questions factual and concrete, not abstract
-- Balance depth with breadth across sustainability areas
-- AVOID lifestyle questions that aren't about sustainability (no morning routines, etc.)`
+Return valid JSON only.`
           }
         ],
         max_completion_tokens: 1200,

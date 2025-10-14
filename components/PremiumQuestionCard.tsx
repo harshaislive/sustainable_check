@@ -66,7 +66,8 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
 
   const handleOptionSelect = (option: string) => {
     setSelectedOption(option)
-    if (option.toLowerCase().includes('other')) {
+    // Only show custom input if "Other" option AND it includes "specify"
+    if (option.toLowerCase().includes('other') && option.toLowerCase().includes('specify')) {
       setShowCustomInput(true)
     } else {
       setShowCustomInput(false)
@@ -91,12 +92,12 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
             <div className="h-px bg-gradient-to-r from-forest-700 to-transparent flex-1" />
           </div>
           
-          <h2 className="font-serif text-base sm:text-lg text-forest-900 mb-2 leading-tight">
+          <h2 className="font-arizona text-base sm:text-lg text-forest-900 mb-2 leading-tight">
             {question.text}
           </h2>
-          
+
           {question.context && (
-            <p className="text-earth-stone text-xs sm:text-sm leading-relaxed italic">
+            <p className="font-arizona-light text-earth-stone text-xs sm:text-sm leading-relaxed">
               {question.context}
             </p>
           )}
@@ -112,7 +113,7 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
                     whileHover={{ scale: 1.005 }}
                     whileTap={{ scale: 0.995 }}
                     onClick={() => handleOptionSelect(option)}
-                    className={`text-left p-3 sm:p-2.5 rounded-lg transition-all duration-200 border text-sm sm:text-xs min-h-[48px] sm:min-h-auto flex items-center ${
+                    className={`text-left p-3 sm:p-2.5 rounded-lg transition-all duration-200 border text-sm sm:text-xs min-h-[48px] sm:min-h-auto flex items-center font-arizona-light ${
                       selectedOption === option
                         ? 'bg-forest-50 border-forest-700 text-forest-900 shadow-sm'
                         : 'bg-white/50 border-earth-sand hover:border-forest-500 hover:bg-forest-50/50'
@@ -120,8 +121,8 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
                   >
                     <div className="flex items-start gap-2">
                       <div className={`w-2.5 h-2.5 rounded-full border flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                        selectedOption === option 
-                          ? 'border-forest-700 bg-forest-700' 
+                        selectedOption === option
+                          ? 'border-forest-700 bg-forest-700'
                           : 'border-earth-stone'
                       }`}>
                         {selectedOption === option && (

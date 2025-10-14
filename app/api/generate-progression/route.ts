@@ -60,13 +60,21 @@ REQUIREMENTS:
 - Provide 2-3 concrete next steps they can take immediately
 - Keep it encouraging and achievable
 - Make it personal to their situation, not generic advice
-- Focus on practical actions that will increase their score`
+- Focus on practical actions that will increase their score
+
+FORMAT YOUR RESPONSE AS CLEAN MARKDOWN:
+- Start with a brief encouraging sentence about their current progress
+- Then provide 2-3 numbered action items
+- Use **bold** for key action words
+- Keep each action item to 2-3 sentences max
+- Total response should be 150-200 words
+- NO headings, NO horizontal rules, NO extra formatting`
         },
         {
           role: "user",
           content: `Based on my sustainability assessment responses and current ${commitmentScore.level} level (${commitmentScore.finalScore} points), provide personalized guidance to help me reach ${nextLevel} level (${targetScore}+ points). I need ${pointsNeeded} more points.
 
-Focus on specific actions I can take based on my responses, not general advice. Make it personal and actionable.`
+Focus on specific actions I can take based on my responses, not general advice. Make it personal and actionable. Format as clean markdown with numbered steps.`
         }
       ],
       max_completion_tokens: 400,

@@ -23,7 +23,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     <div className="min-h-screen bg-gradient-dawn relative overflow-hidden">
       {/* Ambient background elements */}
       <div className="absolute inset-0">
-        <div 
+        <div
           className="absolute w-96 h-96 bg-forest-700/5 rounded-full blur-3xl"
           style={{
             left: `${mousePosition.x * 0.05}px`,
@@ -34,7 +34,21 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         <div className="absolute left-1/4 bottom-0 w-96 h-96 bg-earth-clay/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-6">
+      {/* Logo at top */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="relative z-10 pt-8 px-6 flex justify-center"
+      >
+        <img
+          src="https://beforest.co/wp-content/uploads/2024/10/23-Beforest-Black-with-Tagline.png"
+          alt="Beforest"
+          className="h-10 sm:h-12 md:h-14 w-auto object-contain"
+        />
+      </motion.div>
+
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-6 -mt-20">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -48,14 +62,14 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               transition={{ delay: 0.3, duration: 0.8 }}
               className="space-y-6"
             >
-              <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-forest-900 leading-tight">
+              <h1 className="font-arizona text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-forest-900 leading-tight">
                 <span className="block">Discover Your</span>
                 <span className="block text-transparent bg-clip-text bg-gradient-to-r from-forest-700 to-earth-clay">
                   Sustainability DNA
                 </span>
               </h1>
-              <p className="text-base sm:text-lg md:text-xl text-earth-stone max-w-2xl mx-auto leading-relaxed px-4">
-                An intelligent assessment that reveals your unique environmental impact profile 
+              <p className="font-arizona-light text-base sm:text-lg md:text-xl text-earth-stone max-w-2xl mx-auto leading-relaxed px-4">
+                An intelligent assessment that reveals your unique environmental impact profile
                 and guides you toward meaningful, personalized sustainable choices.
               </p>
             </motion.div>
@@ -70,8 +84,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onStart}
-                className="relative z-20 px-6 sm:px-8 py-3 sm:py-4 bg-forest-900 text-accent-pearl rounded-full text-base sm:text-lg font-medium 
-                         hover:bg-forest-800 transition-all duration-300 shadow-2xl 
+                className="relative z-20 px-6 sm:px-8 py-3 sm:py-4 bg-forest-900 text-accent-pearl rounded-full text-base sm:text-lg font-arizona
+                         hover:bg-forest-800 transition-all duration-300 shadow-2xl
                          border border-forest-700 hover:border-forest-600 cursor-pointer min-h-[48px] min-w-[48px]"
               >
                 <span className="flex items-center gap-2">
@@ -87,7 +101,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               transition={{ delay: 0.9, duration: 0.8 }}
               className="pt-12"
             >
-              <p className="text-xs sm:text-sm text-earth-stone/60 tracking-wider uppercase px-4 text-center">
+              <p className="font-arizona-light text-xs sm:text-sm text-earth-stone/60 tracking-wider uppercase px-4 text-center">
                 10-minute assessment • Science-backed insights • Actionable recommendations
               </p>
             </motion.div>
