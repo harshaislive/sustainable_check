@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   levelItemScore: {
     fontSize: 10,
     fontFamily: 'Helvetica-Bold',
-    color: colors.terracotta,
+    color: colors.earthClay,
     backgroundColor: colors.accentMist,
     paddingHorizontal: 8,
     paddingVertical: 4,

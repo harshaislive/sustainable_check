@@ -34,7 +34,11 @@ export async function createAdminToken(username: string): Promise<string> {
 export async function verifyAdminToken(token: string): Promise<AdminSession | null> {
   try {
     const verified = await jwtVerify(token, JWT_SECRET)
-    return verified.payload as AdminSession
+    const payload = verified.payload
+    if (payload && typeof payload.username === 'string' && typeof payload.isAdmin === 'boolean') {
+      return payload as unknown as AdminSession
+    }
+    return null
   } catch (error) {
     return null
   }

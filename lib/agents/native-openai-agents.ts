@@ -625,6 +625,8 @@ export class NativeSustainabilityCoordinator {
         summary: reportData.summary,
         insights: reportData.insights,
         recommendations: reportData.recommendations,
+        categories: reportData.categories,
+        personalityProfile: reportData.personalityProfile,
         score: commitmentScore.finalScore,
         level: commitmentScore.level,
         confidence: commitmentScore.confidence,

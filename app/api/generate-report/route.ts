@@ -81,11 +81,11 @@ export async function POST(request: Request) {
             .insert([
               {
                 session_id: sessionId,
-                overall_score: result.report.overallScore,
-                categories: result.report.categories,
-                insights: result.report.insights,
-                recommendations: result.report.recommendations,
-                personality_profile: result.report.personalityProfile
+                overall_score: result.report.score || commitmentScore.finalScore,
+                categories: result.report.categories || [],
+                insights: result.report.insights || [],
+                recommendations: result.report.recommendations || [],
+                personality_profile: result.report.personalityProfile || result.report.summary || ''
               }
             ])
           console.log('Report saved to database')
