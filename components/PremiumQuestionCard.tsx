@@ -96,11 +96,9 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -30 }}
       transition={{ duration: 0.6, ease: [0.43, 0.13, 0.23, 0.96] }}
-      className="w-full max-w-4xl mx-auto my-4 flex flex-col max-h-[calc(100vh-200px)]"
+      className="w-full max-w-4xl mx-auto my-4"
     >
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl premium-shadow border border-white/20 overflow-hidden flex flex-col max-h-full mx-2 sm:mx-0">
-        {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl premium-shadow border border-white/20 p-4 sm:p-5 mx-2 sm:mx-0">
           <div className="mb-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-6 h-6 bg-forest-900 text-accent-pearl rounded-full flex items-center justify-center font-mono text-xs">
@@ -205,31 +203,27 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
               />
             </div>
           )}
-          </div>
         </div>
 
-        {/* Fixed button at bottom */}
-        <div className="flex-shrink-0 p-4 sm:p-5 pt-3 border-t border-earth-sand/20 bg-white/60 backdrop-blur-sm">
-          <div className="flex justify-end">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleSubmit}
-              disabled={isLoading || !canSubmit()}
-              className="px-6 sm:px-5 py-3 sm:py-2 bg-forest-900 text-accent-pearl rounded-full font-medium text-sm sm:text-xs
-                       hover:bg-forest-800 transition-all duration-300 disabled:opacity-50
-                       disabled:cursor-not-allowed shadow-md hover:shadow-lg min-h-[48px] sm:min-h-auto touch-manipulation"
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 border border-accent-pearl/30 border-t-accent-pearl rounded-full animate-spin" />
-                  Processing...
-                </span>
-              ) : (
-                'Continue'
-              )}
-            </motion.button>
-          </div>
+        <div className="mt-4 flex justify-end">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleSubmit}
+            disabled={isLoading || !canSubmit()}
+            className="px-6 sm:px-5 py-3 sm:py-2 bg-forest-900 text-accent-pearl rounded-full font-medium text-sm sm:text-xs
+                     hover:bg-forest-800 transition-all duration-300 disabled:opacity-50
+                     disabled:cursor-not-allowed shadow-md hover:shadow-lg min-h-[48px] sm:min-h-auto touch-manipulation"
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-1.5">
+                <div className="w-3 h-3 border border-accent-pearl/30 border-t-accent-pearl rounded-full animate-spin" />
+                Processing...
+              </span>
+            ) : (
+              'Continue'
+            )}
+          </motion.button>
         </div>
       </div>
     </motion.div>

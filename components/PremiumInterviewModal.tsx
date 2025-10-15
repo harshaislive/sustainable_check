@@ -180,22 +180,19 @@ export default function PremiumInterviewModal({ onComplete }: PremiumInterviewMo
         {/* Main Content */}
         <div className="flex-1 flex min-h-0 overflow-hidden">
           {/* Question Section */}
-          <div className="flex-1 px-3 sm:px-4 py-2 sm:py-4 overflow-y-auto safe-area-bottom" style={{ WebkitOverflowScrolling: 'touch' }}>
-            <div className="min-h-full flex items-center justify-center py-4">
-              <AnimatePresence mode="wait">
-                {questions[currentQuestionIndex] && (
-                  <PremiumQuestionCard
-                    key={questions[currentQuestionIndex].id}
-                    question={questions[currentQuestionIndex]}
-                    questionNumber={currentQuestionIndex + 1}
-                    onAnswer={handleAnswer}
-                    isLoading={isLoading || isProcessingAnswer}
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-          
+          <div className="flex-1 px-3 sm:px-4 py-2 sm:py-4 overflow-y-auto overflow-x-hidden safe-area-bottom" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <AnimatePresence mode="wait">
+              {questions[currentQuestionIndex] && (
+                <PremiumQuestionCard
+                  key={questions[currentQuestionIndex].id}
+                  question={questions[currentQuestionIndex]}
+                  questionNumber={currentQuestionIndex + 1}
+                  onAnswer={handleAnswer}
+                  isLoading={isLoading || isProcessingAnswer}
+                />
+              )}
+            </AnimatePresence>
+          </div>          
           {/* Quote Panel */}
           <div className="hidden xl:block w-60 bg-gradient-to-br from-forest-900 to-forest-800 flex-shrink-0">
             <PremiumQuotePanel currentQuestion={currentQuestionIndex} />
