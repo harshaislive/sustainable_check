@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Question } from '@/types'
 
@@ -17,6 +17,7 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
   const [elaboration, setElaboration] = useState('')
   const [customAnswer, setCustomAnswer] = useState('')
   const [showCustomInput, setShowCustomInput] = useState(false)
+  const cardRef = React.useRef<HTMLDivElement>(null)
 
   const handleSubmit = () => {
     if (question.type === 'text' && textAnswer.trim()) {
@@ -69,14 +70,28 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
     // Only show custom input if "Other" option AND it includes "specify"
     if (option.toLowerCase().includes('other') && option.toLowerCase().includes('specify')) {
       setShowCustomInput(true)
+      // Scroll to bottom after custom input appears
+      setTimeout(() => {
+        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      }, 350)
     } else {
       setShowCustomInput(false)
       setCustomAnswer('')
     }
   }
 
+  // Auto-scroll when elaboration field appears for mcq_text
+  useEffect(() => {
+    if (question.type === 'mcq_text' && selectedOption) {
+      setTimeout(() => {
+        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      }, 350)
+    }
+  }, [selectedOption, question.type])
+
   return (
     <motion.div
+      ref={cardRef}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -30 }}
