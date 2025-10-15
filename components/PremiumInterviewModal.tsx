@@ -180,18 +180,20 @@ export default function PremiumInterviewModal({ onComplete }: PremiumInterviewMo
         {/* Main Content */}
         <div className="flex-1 flex min-h-0 overflow-hidden">
           {/* Question Section */}
-          <div className="flex-1 flex items-center justify-center px-3 sm:px-4 py-2 sm:py-4 overflow-y-auto safe-area-bottom">
-            <AnimatePresence mode="wait">
-              {questions[currentQuestionIndex] && (
-                <PremiumQuestionCard
-                  key={questions[currentQuestionIndex].id}
-                  question={questions[currentQuestionIndex]}
-                  questionNumber={currentQuestionIndex + 1}
-                  onAnswer={handleAnswer}
-                  isLoading={isLoading || isProcessingAnswer}
-                />
-              )}
-            </AnimatePresence>
+          <div className="flex-1 flex flex-col px-3 sm:px-4 py-2 sm:py-4 overflow-y-auto safe-area-bottom">
+            <div className="flex-1 flex items-center justify-center min-h-0">
+              <AnimatePresence mode="wait">
+                {questions[currentQuestionIndex] && (
+                  <PremiumQuestionCard
+                    key={questions[currentQuestionIndex].id}
+                    question={questions[currentQuestionIndex]}
+                    questionNumber={currentQuestionIndex + 1}
+                    onAnswer={handleAnswer}
+                    isLoading={isLoading || isProcessingAnswer}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
           </div>
           
           {/* Quote Panel */}
