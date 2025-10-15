@@ -180,7 +180,7 @@ export default function PremiumInterviewModal({ onComplete }: PremiumInterviewMo
         {/* Main Content */}
         <div className="flex-1 flex min-h-0 overflow-hidden">
           {/* Question Section */}
-          <div className="flex-1 px-3 sm:px-4 py-2 sm:py-4 overflow-y-auto overflow-x-hidden safe-area-bottom" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex-1 px-3 sm:px-4 py-2 sm:py-4 pb-24 overflow-y-auto overflow-x-hidden safe-area-bottom" style={{ WebkitOverflowScrolling: 'touch' }}>
             <AnimatePresence mode="wait">
               {questions[currentQuestionIndex] && (
                 <PremiumQuestionCard

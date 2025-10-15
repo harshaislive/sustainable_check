@@ -72,8 +72,12 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
       setShowCustomInput(true)
       // Scroll to bottom after custom input appears
       setTimeout(() => {
-        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-      }, 350)
+        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+        // Also scroll a bit extra to ensure button is fully visible
+        setTimeout(() => {
+          window.scrollBy({ top: 100, behavior: 'smooth' })
+        }, 100)
+      }, 400)
     } else {
       setShowCustomInput(false)
       setCustomAnswer('')
@@ -82,10 +86,13 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
 
   // Auto-scroll when elaboration field appears for mcq_text
   useEffect(() => {
-    if (question.type === 'mcq_text' && selectedOption) {
+    if (question.type === 'mcq_text' && selectedOption && !selectedOption.toLowerCase().includes('other')) {
       setTimeout(() => {
-        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-      }, 350)
+        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+        setTimeout(() => {
+          window.scrollBy({ top: 100, behavior: 'smooth' })
+        }, 100)
+      }, 400)
     }
   }, [selectedOption, question.type])
 
@@ -96,7 +103,7 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -30 }}
       transition={{ duration: 0.6, ease: [0.43, 0.13, 0.23, 0.96] }}
-      className="w-full max-w-4xl mx-auto my-4"
+      className="w-full max-w-4xl mx-auto my-4 mb-20"
     >
       <div className="bg-white/80 backdrop-blur-sm rounded-xl premium-shadow border border-white/20 p-4 sm:p-5 mx-2 sm:mx-0">
           <div className="mb-4">
