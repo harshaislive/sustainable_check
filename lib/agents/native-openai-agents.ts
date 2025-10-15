@@ -30,7 +30,7 @@ Example questions:
 
 This is QUESTION 1 of 10 in the Sustainability Wheel covering these topics in order:
 1. Food & Diet → 2. Water → 3. Energy → 4. Transportation → 5. Waste
-6. Fashion & Shopping → 7. Finance → 8. Community → 9. Digital → 10. Future Vision
+6. Fashion & Shopping → 7. Community → 8. Digital → 9. Home & Living → 10. Future Vision
 
 CRITICAL RULES:
 - Question MUST be about Food & Diet (vegetables, eating habits, food sources)
@@ -215,21 +215,21 @@ REQUIREMENTS:
         },
         {
           id: 7,
-          topic: 'Finance',
-          keywords: ['money', 'invest', 'bank', 'finance', 'ESG', 'ethical', 'savings', 'budget', 'spend'],
-          examples: ['Do you consider ESG factors in investing?', 'Do you use ethical banking?', 'Are you willing to pay more for sustainable products?']
-        },
-        {
-          id: 8,
           topic: 'Community',
           keywords: ['community', 'local', 'volunteer', 'activism', 'education', 'teach', 'share', 'influence', 'neighbors'],
           examples: ['Are you involved in local sustainability initiatives?', 'Do you teach others about sustainability?', 'How do you influence your community?']
         },
         {
-          id: 9,
+          id: 8,
           topic: 'Digital',
           keywords: ['digital', 'electronic', 'e-waste', 'devices', 'phone', 'computer', 'cloud', 'streaming', 'data'],
           examples: ['How do you handle electronic waste?', 'Do you consider digital carbon footprint?', 'How long do you keep devices before upgrading?']
+        },
+        {
+          id: 9,
+          topic: 'Home & Living',
+          keywords: ['home', 'house', 'living', 'cleaning', 'garden', 'space', 'sustainable living', 'eco-friendly home'],
+          examples: ['Do you use eco-friendly cleaning products?', 'Do you grow any of your own food?', 'How do you make your home more sustainable?']
         },
         {
           id: 10,
@@ -287,7 +287,7 @@ ${coveredTopics.map((t, i) => `Q${i+1}: ${t}`).join(', ')}
 
 SUSTAINABILITY WHEEL STRUCTURE (10 Pillars):
 1. Food & Diet → 2. Water → 3. Energy → 4. Transportation → 5. Waste
-6. Fashion & Shopping → 7. Finance → 8. Community → 9. Digital → 10. Future Vision
+6. Fashion & Shopping → 7. Community → 8. Digital → 9. Home & Living → 10. Future Vision
 
 ALWAYS respond with valid JSON in this exact format:
 {

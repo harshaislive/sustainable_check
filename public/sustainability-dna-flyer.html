@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discover Your Sustainability DNA</title>
+    <style>
+        @font-face {
+            font-family: 'ABC Arizona Flare';
+            src: url('./fonts/ABCArizonaFlare-Regular-Trial.woff2') format('woff2'),
+                 url('./fonts/ABCArizonaFlare-Regular-Trial.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'ABC Arizona Flare';
+            src: url('./fonts/ABCArizonaFlare-Light-Trial.woff2') format('woff2'),
+                 url('./fonts/ABCArizonaFlare-Light-Trial.woff') format('woff');
+            font-weight: 300;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'ABC Arizona Sans';
+            src: url('./fonts/ABCArizonaSans-Regular-Trial.woff2') format('woff2'),
+                 url('./fonts/ABCArizonaSans-Regular-Trial.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'ABC Arizona Flare', 'Georgia', serif;
+            background: linear-gradient(to bottom, #fdfbf7 0%, #e7e4df 50%, #fdfbf7 100%);
+            width: 210mm;
+            height: 297mm;
+            padding: 0;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background decorative elements */
+        .bg-circle-1 {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: rgba(52, 71, 54, 0.05);
+            border-radius: 50%;
+            top: -100px;
+            right: -100px;
+            filter: blur(60px);
+        }
+
+        .bg-circle-2 {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(134, 49, 43, 0.08);
+            border-radius: 50%;
+            bottom: -80px;
+            left: -80px;
+            filter: blur(50px);
+        }
+
+        .bg-circle-3 {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            background: rgba(255, 192, 131, 0.06);
+            border-radius: 50%;
+            top: 50%;
+            left: -50px;
+            filter: blur(40px);
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 50px;
+            text-align: center;
+        }
+
+        .logo {
+            margin-bottom: 60px;
+        }
+
+        .logo img {
+            height: 50px;
+            width: auto;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-width: 650px;
+        }
+
+        h1 {
+            font-size: 58px;
+            line-height: 1.2;
+            color: #342e29;
+            margin-bottom: 20px;
+            font-weight: 400;
+            letter-spacing: -1px;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #344736 0%, #86312b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 500;
+        }
+
+        .subtitle {
+            font-family: 'ABC Arizona Sans', sans-serif;
+            font-size: 22px;
+            color: #51514d;
+            line-height: 1.3;
+            margin-bottom: 50px;
+            max-width: 650px;
+            font-weight: 400;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 30px;
+            border-radius: 0;
+            box-shadow: 0 20px 60px rgba(52, 46, 41, 0.12);
+            margin-bottom: 30px;
+            border: 2px solid rgba(52, 71, 54, 0.1);
+        }
+
+        .qr-code {
+            width: 350px;
+            height: 350px;
+            display: block;
+        }
+
+        .cta-text {
+            font-size: 28px;
+            color: #342e29;
+            font-weight: 500;
+            margin-bottom: 15px;
+            letter-spacing: -0.5px;
+        }
+
+        .scan-instruction {
+            font-family: 'ABC Arizona Sans', sans-serif;
+            font-size: 18px;
+            color: #51514d;
+            font-weight: 400;
+            margin-bottom: 40px;
+        }
+
+        .features {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            font-size: 13px;
+            color: #8B8680;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 400;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-dot {
+            width: 6px;
+            height: 6px;
+            background: #344736;
+            border-radius: 50%;
+        }
+
+        .footer {
+            margin-top: auto;
+            padding-top: 40px;
+        }
+
+        .url {
+            font-family: 'ABC Arizona Sans', sans-serif;
+            font-size: 20px;
+            color: #344736;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+        }
+
+        /* Decorative elements */
+        .accent-line {
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #ffc083, transparent);
+            margin: 30px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-circle-1"></div>
+    <div class="bg-circle-2"></div>
+    <div class="bg-circle-3"></div>
+
+    <div class="container">
+        <div class="logo">
+            <img src="https://beforest.co/wp-content/uploads/2024/10/23-Beforest-Black-with-Tagline.png" alt="Beforest">
+        </div>
+
+        <div class="main-content">
+            <h1>
+                What's Your<br>
+                <span class="gradient-text">Sustainability DNA?</span>
+            </h1>
+
+            <p class="subtitle">
+                10 questions. 5 minutes.<br>
+                Find out where you stand and what changes matter most.
+            </p>
+
+            <div class="qr-container">
+                <img src="Sustainability DNA Check.png" alt="Scan to start your sustainability assessment" class="qr-code">
+            </div>
+
+            <p class="cta-text">Scan to Start</p>
+            <p class="scan-instruction">Your results are waiting</p>
+
+            <div class="accent-line"></div>
+        </div>
+
+        <div class="footer">
+            <p class="url">beforest.co/sustainability-check</p>
+        </div>
+    </div>
+</body>
+</html>

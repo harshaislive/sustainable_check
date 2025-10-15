@@ -55,11 +55,11 @@ export default function PremiumQuestionCard({ question, questionNumber, onAnswer
     if (question.type === 'text') return textAnswer.trim()
     if (question.type === 'mcq') {
       if (selectedOption?.toLowerCase().includes('other')) return customAnswer.trim()
-      return selectedOption
+      return !!selectedOption
     }
     if (question.type === 'mcq_text') {
       if (selectedOption?.toLowerCase().includes('other')) return customAnswer.trim()
-      return selectedOption
+      return !!selectedOption
     }
     return false
   }
